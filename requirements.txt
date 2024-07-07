@@ -1,0 +1,8 @@
+discord
+asyncpraw
+aiohttp
+asyncio
+helper
+python-dotenv
+gitpython
+pycord
