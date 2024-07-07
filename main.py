@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 
-client = discord.Client()
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
@@ -25,7 +30,7 @@ async def send_daily_message():
         await message.add_reaction('✅')
         await message.add_reaction('❌')
         thread = await message.create_thread(name="Solutions")
-        await thread.send("Post your solutions here!")
+        await thread.send("Post your solutions here.")
 
 @send_daily_message.before_loop
 async def before():
