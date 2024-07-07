@@ -1,4 +1,4 @@
-import os, datetime, discord
+import os, datetime, discord, logging
 from discord import app_commands
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
@@ -18,12 +18,13 @@ intents = discord.Intents.all()
 intents.message_content = True
 
 client = commands.Bot(command_prefix=PREFIX_COMMAND, intents=intents)
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
 
 @client.event
 async def on_ready():
-    print(f'{client.user} has connected to Discord!')
+    logging.info(f'{client.user} has connected to Discord!')
     send_daily_message.start()
-    print("Bot is ready")
+    logging.info("Bot is ready")
 
 
 @client.event
@@ -32,7 +33,7 @@ async def on_message(message):
         return
     
 
-@tasks.loop(time=datetime.time(hour=19, minute=52, tzinfo=datetime.timezone.utc))
+@tasks.loop(time=datetime.time(hour=0, minute=1, tzinfo=datetime.timezone.utc))
 async def send_daily_message():
     channel = client.get_channel(LC_CHANNEL_ID)
     admin_channel = client.get_channel(ADMIN_CHANNEL)
