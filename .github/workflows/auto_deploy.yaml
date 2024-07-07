@@ -18,7 +18,7 @@ jobs:
 
       - name: Deploy updates
         run: |
-          ssh ${{ secrets.SSH_USERNAME }@${{ secrets.SSH_HOST } << 'EOF'
+          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
           cd swecc-bot
           git pull origin main
           source venv/bin/activate
