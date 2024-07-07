@@ -6,3 +6,4 @@ helper
 python-dotenv
 gitpython
 pycord
+requests
