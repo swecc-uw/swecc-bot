@@ -12,17 +12,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: appleboy/ssh-action@master
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy updates
-        run: |
-          ssh -T ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-          cd swecc-bot
-          git pull origin main
-          source venv/bin/activate
-          pip install -r requirements.txt
-          sudo systemctl daemon-reload
-          sudo systemctl restart swecc-bot.service
-          EOF
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            cd /home/shawn/swecc-bot
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt
+            sudo systemctl daemon-reload
+            sudo systemctl restart swecc-bot.service
