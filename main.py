@@ -3,6 +3,7 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from APIs.LeetcodeAPI import LeetcodeAPI
+from APIs.SweccAPI import SweccAPI
 
 load_dotenv()
 
@@ -14,6 +15,7 @@ ADMIN_CHANNEL = int(os.getenv('ADMIN_CHANNEL'))
 PREFIX_COMMAND = os.getenv('PREFIX_COMMAND')
 
 lc = LeetcodeAPI()
+swecc = SweccAPI(SWECC_URL, SWECC_API_KEY)
 intents = discord.Intents.all()
 intents.message_content = True
 
@@ -23,6 +25,11 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(
 @client.event
 async def on_ready():
     logging.info(f'{client.user} has connected to Discord!')
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {synced} commands")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
     send_daily_message.start()
     logging.info("Bot is ready")
 
@@ -32,6 +39,17 @@ async def on_message(message):
     if message.author == client.user:
         return
     
+@client.tree.command(name="auth")
+@app_commands.describe(auth_code = "Authentication code")
+async def auth(ctx: discord.Interaction, auth_code: str):
+    user_id = ctx.user.id
+    username = ctx.user.name
+    response = swecc.auth(username, user_id, auth_code)
+    if response == 200:
+        await ctx.response.send_message("Authentication successful!", ephemeral=True)
+        return
+    await ctx.response.send_message("Authentication failed. Please try again.", ephemeral=True)
+
 
 @tasks.loop(time=datetime.time(hour=0, minute=1, tzinfo=datetime.timezone.utc))
 async def send_daily_message():
