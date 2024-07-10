@@ -1,10 +1,9 @@
-import requests
-
+import requests, os
 
 class SweccAPI:
-    def __init__(self, url, api_key):
-        self.url = url
-        self.api_key = api_key
+    def __init__(self):
+        self.url = os.getenv('SWECC_URL')
+        self.api_key = os.getenv('SWECC_API_KEY')
     
     def auth(self, username, id, code):
         headers = {
@@ -12,7 +11,6 @@ class SweccAPI:
             "Content-Type": "application/json",
         }
 
-        # Define the data to be updated
         data = {
             "discord_id": id,
             "discord_username": username

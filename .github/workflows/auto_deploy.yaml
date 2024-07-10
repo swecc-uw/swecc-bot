@@ -19,7 +19,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
-            cd /home/shawn/swecc-bot
+            cd /home/${{ secrets.SSH_USERNAME }}/swecc-bot
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt
