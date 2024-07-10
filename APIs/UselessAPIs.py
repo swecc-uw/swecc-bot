@@ -10,5 +10,5 @@ class UselessAPIs:
         return response.json()['quote']
     
     def cat_fact(self):
-        response = requests.get("https://meowfacts.herokuapp.com/")
+        response = requests.get("https://catfact.ninja/fact")
         return response.json()['fact']
