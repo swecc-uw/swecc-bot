@@ -8,3 +8,7 @@ class UselessAPIs:
     def kanye_quote(self):
         response = requests.get("https://api.kanye.rest/")
         return response.json()['quote']
+    
+    def cat_fact(self):
+        response = requests.get("https://meowfacts.herokuapp.com/")
+        return response.json()['fact']

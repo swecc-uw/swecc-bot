@@ -27,6 +27,10 @@ async def kanye(ctx: discord.Interaction):
     data = useless.kanye_quote()
     await ctx.response.send_message(data, ephemeral=bot_context.ephemeral)
 
+async def cat_fact(ctx: discord.Interaction):
+    data = useless.cat_fact()
+    await ctx.response.send_message(data, ephemeral=bot_context.ephemeral)
+
 def setup(client, context):
     global bot_context
     bot_context = context
@@ -34,3 +38,4 @@ def setup(client, context):
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
+    client.tree.command(name="cat_fact")(cat_fact)
