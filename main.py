@@ -5,6 +5,7 @@ from APIs.SweccAPI import SweccAPI
 from tasks.lc_daily_message import start_scheduled_task
 import slash_commands.misc as misc
 import slash_commands.auth as auth
+import slash_commands.admin as admin
 from settings.context import BotContext
 
 load_dotenv()
@@ -35,5 +36,6 @@ async def on_message(message):
     
 misc.setup(client, bot_context)
 auth.setup(client, swecc)
+admin.setup(client, bot_context)
 
 client.run(bot_context.token)
