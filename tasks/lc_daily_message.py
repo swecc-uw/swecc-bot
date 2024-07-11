@@ -24,7 +24,7 @@ async def send_daily_message(client, ADMIN_CHANNEL):
             embed = discord.Embed(
                 title=question_title,
                 url=question_link,
-                description=f"**Difficulty:** {difficulty}\n**Tags:** {tags}",
+                description=f"**Difficulty:** {difficulty}",
                 color=colors[difficulty]
             )
             embed.set_author(name="LeetCode Daily Challenge")
