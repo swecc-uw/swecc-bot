@@ -23,9 +23,9 @@ async def on_ready():
     logging.info(f'{client.user} has connected to Discord!')
     try:
         synced = await client.tree.sync()
-        print(f"Synced {synced} commands")
+        logging.info(f"Synced {synced} commands")
     except Exception as e:
-        print(f"Failed to sync commands: {e}")
+        logging.info(f"Failed to sync commands: {e}")
     start_scheduled_task(client, bot_context.admin_channel)
     logging.info("Bot is ready")
 

@@ -11,6 +11,11 @@ async def send_daily_message(client, ADMIN_CHANNEL):
     if channel:
         daily_question = lc.get_leetcode_daily()
         if daily_question:
+            colors = {
+                "Easy": 0x00ff00,
+                "Medium": 0xffa500,
+                "Hard": 0xff0000
+            }
             question_link = daily_question['link']
             question_title = daily_question['question']['title']
             difficulty = daily_question['question']['difficulty']
@@ -20,7 +25,7 @@ async def send_daily_message(client, ADMIN_CHANNEL):
                 title=question_title,
                 url=question_link,
                 description=f"**Difficulty:** {difficulty}\n**Tags:** {tags}",
-                color=0x00ff00
+                color=colors[difficulty]
             )
             embed.set_author(name="LeetCode Daily Challenge")
             embed.set_thumbnail(url="https://leetcode.com/static/images/LeetCode_logo.png")
