@@ -5,7 +5,8 @@ class SweccAPI:
         self.url = os.getenv('SWECC_URL')
         self.api_key = os.getenv('SWECC_API_KEY')
     
-    def auth(self, username, id, code):
+    def auth(self, discord_username, id, username):
+        print(f"Authenticating {discord_username} with id {id} and username {username}")
         headers = {
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
@@ -13,8 +14,9 @@ class SweccAPI:
 
         data = {
             "discord_id": id,
-            "discord_username": username
+            "discord_username": discord_username,
+            "username": username
         }
 
-        response = requests.put(f"{self.url}/api/discord/{code}/", headers=headers, json=data)
+        response = requests.put(f"{self.url}/api/members/verify-discord/", headers=headers, json=data)
         return response.status_code
