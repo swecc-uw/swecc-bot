@@ -30,6 +30,15 @@ async def on_ready():
     logging.info("Bot is ready")
 
 @client.event
+async def on_member_remove(member: discord.Member):
+    if member.guild.id == bot_context.swecc_server:
+        channel = member.guild.get_channel(bot_context.transcripts_channel)
+
+        if channel is not None:
+            await channel.send(f"{member.display_name} has left the server.")
+
+
+@client.event
 async def on_message(message):
     if message.author == client.user:
         return
