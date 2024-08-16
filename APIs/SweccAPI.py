@@ -18,5 +18,5 @@ class SweccAPI:
             "username": username
         }
 
-        response = requests.put(f"{self.url}/api/members/verify-discord/", headers=headers, json=data)
+        response = requests.put(f"{self.url}/members/verify-discord/", headers=headers, json=data)
         return response.status_code
