@@ -56,10 +56,14 @@ async def on_thread_create(thread):
             await asyncio.sleep(5) 
             message = await thread.fetch_message(thread.id)
             if not message.attachments or not message.attachments[0].content_type.startswith("image"):
+                try:
+                    channelName = thread.parent.mention
+                except:
+                    channelName = thread.parent.name
                 await message.thread.delete()
-                await message.author.send(f"Hello {message.author.name}, your resume post in {thread.parent.name} was deleted because it didn't contain an image of your resume. Please try again with posting an image.")
+                await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again.")
                 mod_channel = thread.guild.get_channel(bot_context.transcripts_channel)
-                await mod_channel.send(f"{message.author.mention}'s resume post in {thread.parent.name} was deleted because it didn't contain an image of their resume. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
+                await mod_channel.send(f"{message.author.mention}'s resume post in {channelName} was deleted because it didn't contain an image of their resume. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
 
 
 misc.setup(client, bot_context)
