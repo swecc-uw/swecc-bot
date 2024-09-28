@@ -7,6 +7,7 @@ import slash_commands.misc as misc
 import slash_commands.auth as auth
 import slash_commands.admin as admin
 from settings.context import BotContext
+import asyncio
 
 load_dotenv()
 
@@ -35,14 +36,32 @@ async def on_member_remove(member: discord.Member):
         channel = member.guild.get_channel(bot_context.transcripts_channel)
 
         if channel is not None:
-            await channel.send(f"{member.display_name} has left the server.")
+            try:
+                await channel.send(f"{member.mention} has left the server.")
+            except:
+                await channel.send(f"{member.display_name} has left the server.")
 
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
-    
+
+
+@client.event
+async def on_thread_create(thread):
+    if thread.guild.id == bot_context.swecc_server:
+
+        if thread.parent_id == bot_context.resume_channel:
+            await asyncio.sleep(5) 
+            message = await thread.fetch_message(thread.id)
+            if not message.attachments or not message.attachments[0].content_type.startswith("image"):
+                await message.thread.delete()
+                await message.author.send(f"Hello {message.author.name}, your resume post in {thread.parent.name} was deleted because it didn't contain an image of your resume. Please try again with posting an image.")
+                mod_channel = thread.guild.get_channel(bot_context.transcripts_channel)
+                await mod_channel.send(f"{message.author.mention}'s resume post in {thread.parent.name} was deleted because it didn't contain an image of their resume. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
+
+
 misc.setup(client, bot_context)
 auth.setup(client, swecc)
 admin.setup(client, bot_context)

@@ -8,3 +8,4 @@ class BotContext:
         self.prefix = os.getenv('PREFIX_COMMAND')
         self.swecc_server = int(os.getenv('SWECC_SERVER'))
         self.transcripts_channel = int(os.getenv('TRANSCRIPTS_CHANNEL'))
+        self.resume_channel = int(os.getenv('SWECC_RESUME_CHANNEL'))
