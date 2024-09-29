@@ -38,4 +38,4 @@ async def auth(ctx: discord.Interaction):
 def setup(client, context):
     global bot_context
     bot_context = context
-    client.tree.command(name="auth")(auth)
+    client.tree.command(name="verify")(auth)
