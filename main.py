@@ -64,7 +64,7 @@ async def on_thread_create(thread):
                     await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again with a screenshot instead of {message.attachments[0].content_type}.")
 
                 mod_channel = thread.guild.get_channel(bot_context.transcripts_channel)
-                await mod_channel.send(f"{message.author.mention}'s resume post in {channelName} was deleted because it didn't contain an image of their resume. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
+                await mod_channel.send(f"{message.author.mention}'s resume post in {channelName} was deleted. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
 
 
 misc.setup(client, bot_context)
