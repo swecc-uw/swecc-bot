@@ -16,8 +16,8 @@ class VerifyModal(discord.ui.Modal, title="Verify your account"):
         self.add_item(self.code)
 
     async def on_submit(self, interaction: discord.Interaction):
-        username = interaction.user.id
-        user_id = interaction.user.name
+        username = interaction.user.name
+        user_id = interaction.user.id
         auth_code = self.code.value
         response = self.swecc.auth(username, user_id, auth_code)
         if response == 200:
