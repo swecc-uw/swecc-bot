@@ -36,10 +36,7 @@ async def on_member_remove(member: discord.Member):
         channel = member.guild.get_channel(bot_context.transcripts_channel)
 
         if channel is not None:
-            try:
-                await channel.send(f"{member.mention} has left the server.")
-            except:
-                await channel.send(f"{member.display_name} has left the server.")
+            await channel.send(f"{member.display_name} ({member.id}) has left the server.")
 
 
 @client.event
@@ -61,7 +58,11 @@ async def on_thread_create(thread):
                 except:
                     channelName = thread.parent.name
                 await message.thread.delete()
-                await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again.")
+                if not message.attachments:
+                    await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again.")
+                else:
+                    await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again with a screenshot instead of {message.attachments[0].content_type}.")
+
                 mod_channel = thread.guild.get_channel(bot_context.transcripts_channel)
                 await mod_channel.send(f"{message.author.mention}'s resume post in {channelName} was deleted because it didn't contain an image of their resume. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
 
