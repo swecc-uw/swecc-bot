@@ -33,17 +33,12 @@ async def on_ready():
 @client.event
 async def on_member_remove(member: discord.Member):
     if member.guild.id == bot_context.swecc_server:
-        channel = member.guild.get_channel(bot_context.transcripts_channel)
-
-        if channel is not None:
-            await channel.send(f"{member.display_name} ({member.id}) has left the server.")
-
+            await bot_context.log(f"{member.display_name} ({member.id}) has left the server.")
 
 @client.event
 async def on_message(message):
     if message.author == client.user:
         return
-
 
 @client.event
 async def on_thread_create(thread):
@@ -63,12 +58,11 @@ async def on_thread_create(thread):
                 else:
                     await message.author.send(f"Hello {message.author.mention}, your resume post in {channelName} was deleted because it didn't contain a screenshot of your resume. Please try again with a screenshot instead of {message.attachments[0].content_type}.")
 
-                mod_channel = thread.guild.get_channel(bot_context.transcripts_channel)
-                await mod_channel.send(f"{message.author.mention}'s resume post in {channelName} was deleted. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
+                await bot_context.log(f"{message.author.mention}'s resume post in {channelName} was deleted. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
 
 
 misc.setup(client, bot_context)
-auth.setup(client, swecc)
+auth.setup(client, bot_context)
 admin.setup(client, bot_context)
 
 client.run(bot_context.token)

@@ -1,4 +1,4 @@
-import os, asyncpraw
+import os
 
 class BotContext:
     def __init__(self):
@@ -9,3 +9,7 @@ class BotContext:
         self.swecc_server = int(os.getenv('SWECC_SERVER'))
         self.transcripts_channel = int(os.getenv('TRANSCRIPTS_CHANNEL'))
         self.resume_channel = int(os.getenv('SWECC_RESUME_CHANNEL'))
+    
+    async def log(self, ctx, message):
+        channel = ctx.guild.get_channel(self.transcripts_channel)
+        await channel.send(message)

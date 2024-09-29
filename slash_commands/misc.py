@@ -31,9 +31,13 @@ async def cat_fact(ctx: discord.Interaction):
     data = useless.cat_fact()
     await ctx.response.send_message(data, ephemeral=bot_context.ephemeral)
 
+async def say_hi(ctx: discord.Interaction):
+    await ctx.response.send_message("hi", ephemeral=True)
+
 def setup(client, context):
     global bot_context
     bot_context = context
+    client.tree.command(name="say_hi")(say_hi)
     client.tree.command(name="xyz")(google_xyz)
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
