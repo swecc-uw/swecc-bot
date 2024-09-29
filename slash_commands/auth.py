@@ -8,9 +8,9 @@ class VerifyModal(discord.ui.Modal, title="Verify your account"):
         self.swecc = SweccAPI()
 
         self.code = discord.ui.TextInput(
-            label="Code",
+            label="Username",
             style=discord.TextStyle.short,  
-            placeholder="Enter your verification code",
+            placeholder="Enter your website username:",
         )
 
         self.add_item(self.code)
