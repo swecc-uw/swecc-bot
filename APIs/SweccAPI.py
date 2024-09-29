@@ -1,4 +1,6 @@
-import requests, os
+import requests, os, logging
+
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
 
 class SweccAPI:
     def __init__(self):
@@ -6,7 +8,7 @@ class SweccAPI:
         self.api_key = os.getenv('SWECC_API_KEY')
     
     def auth(self, discord_username, id, username):
-        print(f"Authenticating {discord_username} with id {id} and username {username}")
+        logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
         headers = {
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
