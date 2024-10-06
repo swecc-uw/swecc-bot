@@ -1,7 +1,9 @@
 import discord
 from APIs.UselessAPIs import UselessAPIs
+from APIs.CalendarAPI import CalendarAPI
 
 useless = UselessAPIs()
+calendar = CalendarAPI()
 
 async def google_xyz(ctx: discord.Interaction):
     message = (
@@ -34,6 +36,25 @@ async def cat_fact(ctx: discord.Interaction):
 async def say_hi(ctx: discord.Interaction):
     await ctx.response.send_message("hi", ephemeral=True)
 
+async def next_meeting(ctx: discord.Interaction):
+    meeting_info = await calendar.get_next_meeting()
+    caldendar_url = "https://calendar.google.com/calendar/u/0?cid=Y19kYmU2YWQ2ODliNTE2MjMzMjMyZjcwNDk4NDA1OWIwOTVhNWE5YmVhZmIyZGVmZTBiZjQ4YmFhZWJiMTA4ZThhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
+    calendar_hyperlink = f"[SWECC Public Calendar]({caldendar_url})"
+    if meeting_info:
+        embed = discord.Embed(
+            title=f"📅 Next Meeting: {meeting_info['name']}",
+            description=f"**Description:** {meeting_info['description'] or 'No description available.'}\n\n",
+            color=discord.Color.blue()
+        )
+
+        embed.add_field(name="🕒 Date & Time", value=meeting_info['date'], inline=False)
+        embed.add_field(name="📍 Location", value=meeting_info['location'] or "Not specified", inline=False)
+        embed.add_field(name="🔗 Calendar Link", value=calendar_hyperlink, inline=False)
+        
+        await ctx.response.send_message(embed=embed)
+    else:
+        await ctx.response.send_message("No upcoming meetings found.")
+
 def setup(client, context):
     global bot_context
     bot_context = context
@@ -43,3 +64,4 @@ def setup(client, context):
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
     client.tree.command(name="cat_fact")(cat_fact)
+    client.tree.command(name="next_meeting")(next_meeting)
