@@ -7,7 +7,6 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(
 class CalendarAPI:
     def __init__(self):
         self.url = os.getenv('CALENDAR_URL')
-        print(self.url)
 
     def get_suffix(self, day):
         if 4 <= day <= 20 or 24 <= day <= 30:
@@ -38,8 +37,6 @@ class CalendarAPI:
         }
     
     async def get_next_meeting(self):
-
-        print('url', self.url)
         response = requests.get(self.url)
         response.raise_for_status() 
 
