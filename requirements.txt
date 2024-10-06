@@ -7,3 +7,5 @@ python-dotenv
 gitpython
 pycord
 requests
+pytz
+ics
