@@ -9,22 +9,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      - name: Set up GitHub CLI
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+
+      - name: Get PR approvers (only for merged PRs)
+        if: github.event.pull_request.merged == 'true'
+        id: get-approvers
+        run: |
+          REVIEWS=$(gh pr reviews ${{ github.event.number }} --repo ${{ github.repository }} --json author,state)
+          APPROVERS=$(echo "$REVIEWS" | jq -r '.[] | select(.state=="APPROVED") | .author.login' | paste -sd ',' -)
+          if [ -z "$APPROVERS" ]; then
+            APPROVERS="No approvers"
+          fi
+          echo "approvers=$APPROVERS" >> $GITHUB_ENV
+
       - name: Send Discord notification
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          # Construct the message based on the type of PR event
           if [[ "${{ github.event.action }}" == "opened" ]]; then
             MESSAGE="📢 A new pull request has been opened in \`${{ github.repository }}\` by \`${{ github.actor }}\`.\n🔗 [PR #${{ github.event.number }} - ${{ github.event.pull_request.title }}](${{ github.event.pull_request.html_url }})";
           elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged }}" == "true" ]]; then
-            MESSAGE="✅ Pull request \`${{ github.event.pull_request.title }}\` in \`${{ github.repository }}\` has been merged by \`${{ github.actor }}\`.\n🔗 [PR #${{ github.event.number }}](${{ github.event.pull_request.html_url }})";
+            MESSAGE="✅ Pull request \`${{ github.event.pull_request.title }}\` in \`${{ github.repository }}\` has been merged by \`${{ github.actor }}\`.\n🔗 [PR #${{ github.event.number }}](${{ github.event.pull_request.html_url }})\n👥 **Approvers**: $APPROVERS";
           elif [[ "${{ github.event.action }}" == "closed" && "${{ github.event.pull_request.merged }}" != "true" ]]; then
             MESSAGE="❌ Pull request \`${{ github.event.pull_request.title }}\` in \`${{ github.repository }}\` has been closed without merging by \`${{ github.actor }}\`.\n🔗 [PR #${{ github.event.number }}](${{ github.event.pull_request.html_url }})";
           else
-            exit 0;  # Exit for any other PR events (not interested)
+            exit 0; 
           fi
 
-          # Send the message to the Discord channel using curl
           curl -H "Content-Type: application/json" \
                -d "{\"content\": \"$MESSAGE\"}" \
                $DISCORD_WEBHOOK_URL
