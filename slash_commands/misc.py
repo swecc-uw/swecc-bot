@@ -64,4 +64,4 @@ def setup(client, context):
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
     client.tree.command(name="cat_fact")(cat_fact)
-    client.tree.command(name="next_meeting")(next_meeting)
+    client.tree.command(name="next_meeting")(next_meeting) 
