@@ -46,12 +46,11 @@ async def send_daily_aoc_message(client):
                     name="🎖️ Leaderboard (Top 10)",
                     value=(f"{leaderboard_text}\n\n"
                         f"[View full leaderboard]({aoc_api.get_leaderboard_url()})\n\n"
-                        f"Use key `{LEADERBOARD_KEY}` to join the leaderboard!"
                     ),
                     inline=False
                 )
 
-            embed.set_footer(text="Happy coding and good luck!")
+            embed.set_footer(text=f"Leaderboard join key: {LEADERBOARD_KEY} ")
             embed.set_thumbnail(url="https://adventofcode.com/favicon.png")
 
             await channel.send(embed=embed)
