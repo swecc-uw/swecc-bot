@@ -1,8 +1,10 @@
 import discord, os, datetime
 from discord.ext import tasks
 from APIs.LeetcodeAPI import LeetcodeAPI
+from dotenv import load_dotenv
 
 lc = LeetcodeAPI()
+load_dotenv()
 LC_CHANNEL_ID = int(os.getenv('LC_CHANNEL_ID'))
 
 async def send_daily_message(client, ADMIN_CHANNEL):
@@ -19,7 +21,6 @@ async def send_daily_message(client, ADMIN_CHANNEL):
             question_link = daily_question['link']
             question_title = daily_question['question']['title']
             difficulty = daily_question['question']['difficulty']
-            tags = ", ".join(daily_question['question']['topicTags'])
 
             embed = discord.Embed(
                 title=question_title,

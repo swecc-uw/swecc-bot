@@ -38,8 +38,7 @@ async def say_hi(ctx: discord.Interaction):
 
 async def next_meeting(ctx: discord.Interaction):
     meeting_info = await calendar.get_next_meeting()
-    caldendar_url = "https://calendar.google.com/calendar/u/0?cid=Y19kYmU2YWQ2ODliNTE2MjMzMjMyZjcwNDk4NDA1OWIwOTVhNWE5YmVhZmIyZGVmZTBiZjQ4YmFhZWJiMTA4ZThhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
-    calendar_hyperlink = f"[SWECC Public Calendar]({caldendar_url})"
+    calendar_hyperlink = f"[SWECC Public Calendar]({calendar.get_url()})"
     if meeting_info:
         embed = discord.Embed(
             title=f"📅 Next Meeting: {meeting_info['name']}",

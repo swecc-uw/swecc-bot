@@ -2,12 +2,12 @@ import discord, logging
 from discord.ext import commands
 from dotenv import load_dotenv
 from APIs.SweccAPI import SweccAPI
-from tasks.lc_daily_message import start_scheduled_task
 import slash_commands.misc as misc
 import slash_commands.auth as auth
 import slash_commands.admin as admin
 from settings.context import BotContext
 import asyncio
+from tasks.index import start_daily_tasks
 
 load_dotenv()
 
@@ -27,7 +27,12 @@ async def on_ready():
         logging.info(f"Synced {synced} commands")
     except Exception as e:
         logging.info(f"Failed to sync commands: {e}")
-    start_scheduled_task(client, bot_context.admin_channel)
+    try:
+        start_daily_tasks(client, bot_context)
+        logging.info("Started daily tasks successfully")
+    except:
+        logging.info(f"Failed to start daily tasks: {e}")
+
     logging.info("Bot is ready")
 
 @client.event
