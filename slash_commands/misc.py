@@ -2,12 +2,14 @@ import discord
 from APIs.UselessAPIs import UselessAPIs
 from APIs.CalendarAPI import CalendarAPI
 from APIs.AdventOfCodeAPI import AdventOfCodeAPI
+from APIs.SweccAPI import SweccAPI
 import os
 from dotenv import load_dotenv
 
 useless = UselessAPIs()
 calendar = CalendarAPI()
 aoc_api = AdventOfCodeAPI()
+swecc_api = SweccAPI()
 
 LEADERBOARD_KEY = os.getenv('AOC_LEADERBOARD_KEY')
 
@@ -68,6 +70,31 @@ async def aoc_leaderboard(ctx: discord.Interaction):
     embed.set_thumbnail(url="https://adventofcode.com/favicon.png")
     await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
+async def leetcode_leaderboard(ctx: discord.Interaction):
+    leaderboard_data = swecc_api.leetcode_leaderboard()
+    embed = discord.Embed(
+        title="🏆 Leetcode Leaderboard",
+        description="",
+        color=discord.Color.gold()
+    )
+
+    print(leaderboard_data)
+
+    def format_user(user):
+        return f"**{user['user']['username']}** - Total: {user['total_solved']} | Easy: {user['easy_solved']} | Medium: {user['medium_solved']} | Hard: {user['hard_solved']}"
+
+    if leaderboard_data:
+        leaderboard_text = "\n".join(
+            f"**#{index + 1}:** {format_user(member)}"
+            for index, member in enumerate(leaderboard_data[:10])
+        )
+        embed.add_field(
+            name="🥇 Leaderboard (Top 10)",
+            value=leaderboard_text,
+            inline=False
+        )
+
+    await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
 async def next_meeting(ctx: discord.Interaction):
     meeting_info = await calendar.get_next_meeting()
@@ -98,3 +125,4 @@ def setup(client, context):
     client.tree.command(name="cat_fact")(cat_fact)
     client.tree.command(name="next_meeting")(next_meeting) 
     client.tree.command(name="aoc_leaderboard")(aoc_leaderboard)
+    client.tree.command(name="leetcode_leaderboard")(leetcode_leaderboard)
