@@ -6,13 +6,13 @@ class SweccAPI:
     def __init__(self):
         self.url = os.getenv('SWECC_URL')
         self.api_key = os.getenv('SWECC_API_KEY')
-    
-    def auth(self, discord_username, id, username):
-        logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
-        headers = {
+        self.headers = {
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
         }
+    
+    def auth(self, discord_username, id, username):
+        logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
 
         data = {
             "discord_id": id,
@@ -20,20 +20,16 @@ class SweccAPI:
             "username": username
         }
 
-        response = requests.put(f"{self.url}/members/verify-discord/", headers=headers, json=data)
+        response = requests.put(f"{self.url}/members/verify-discord/", headers=self.headers, json=data)
         return response.status_code
 
     def leetcode_leaderboard(self, order_by=None):
         logging.info("Fetching leetcode leaderboard order by %s", order_by)
-        headers = {
-            "Authorization": f"Api-Key {self.api_key}",
-            "Content-Type": "application/json",
-        }
 
         params = {"order_by": order_by} if order_by else {}
 
         response = requests.get(
-            f"{self.url}/leaderboard/leetcode/", headers=headers, params=params
+            f"{self.url}/leaderboard/leetcode/", headers=self.headers, params=params
         )
 
         if response.status_code == 200:
