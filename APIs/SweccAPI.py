@@ -23,10 +23,10 @@ class SweccAPI:
         response = requests.put(f"{self.url}/members/verify-discord/", headers=self.headers, json=data)
         return response.status_code
 
-    def leetcode_leaderboard(self, order_by=None):
+    def leetcode_leaderboard(self, order_by="total"):
         logging.info("Fetching leetcode leaderboard order by %s", order_by)
 
-        params = {"order_by": order_by} if order_by else {}
+        params = {"order_by": order_by }
 
         response = requests.get(
             f"{self.url}/leaderboard/leetcode/", headers=self.headers, params=params

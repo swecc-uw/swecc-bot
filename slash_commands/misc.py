@@ -71,14 +71,12 @@ async def aoc_leaderboard(ctx: discord.Interaction):
     await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
 async def leetcode_leaderboard(ctx: discord.Interaction):
-    leaderboard_data = swecc_api.leetcode_leaderboard()
+    leaderboard_data = swecc_api.leetcode_leaderboard(order_by="total")
     embed = discord.Embed(
         title="🏆 Leetcode Leaderboard",
         description="",
         color=discord.Color.gold()
     )
-
-    print(leaderboard_data)
 
     def format_user(user):
         return f"**{user['user']['username']}** - Total: {user['total_solved']} | Easy: {user['easy_solved']} | Medium: {user['medium_solved']} | Hard: {user['hard_solved']}"
