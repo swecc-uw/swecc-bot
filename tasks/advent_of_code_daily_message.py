@@ -45,7 +45,7 @@ async def send_daily_aoc_message(client):
                 embed.add_field(
                     name="🎖️ Leaderboard (Top 10)",
                     value=(f"{leaderboard_text}\n\n"
-                        f"[View full leaderboard](https://adventofcode.com/{year}/leaderboard/private/view/{LEADERBOARD_ID})\n\n"
+                        f"[View full leaderboard]({aoc_api.get_leaderboard_url()})\n\n"
                         f"Use key `{LEADERBOARD_KEY}` to join the leaderboard!"
                     ),
                     inline=False

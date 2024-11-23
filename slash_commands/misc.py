@@ -1,9 +1,15 @@
 import discord
 from APIs.UselessAPIs import UselessAPIs
 from APIs.CalendarAPI import CalendarAPI
+from APIs.AdventOfCodeAPI import AdventOfCodeAPI
+import os
+from dotenv import load_dotenv
 
 useless = UselessAPIs()
 calendar = CalendarAPI()
+aoc_api = AdventOfCodeAPI()
+
+LEADERBOARD_KEY = os.getenv('AOC_LEADERBOARD_KEY')
 
 async def google_xyz(ctx: discord.Interaction):
     message = (
@@ -36,6 +42,34 @@ async def cat_fact(ctx: discord.Interaction):
 async def say_hi(ctx: discord.Interaction):
     await ctx.response.send_message("hi", ephemeral=True)
 
+async def aoc_leaderboard(ctx: discord.Interaction):
+    leaderboard_data = await aoc_api.get_leaderboard()
+
+    embed = discord.Embed(
+        title=f"🎄 Current Leaderboard 🎄",
+        description=f"",
+        color=0x1f8b4c 
+    )        
+
+    if leaderboard_data:
+        leaderboard_text = "\n".join(
+            f"**#{index + 1}: {member['name']}** - {member['local_score']} points"
+            for index, member in enumerate(leaderboard_data[:10])
+        )
+        embed.add_field(
+            name="🎖️ Leaderboard (Top 10)",
+            value=(f"{leaderboard_text}\n\n"
+                f"[View full leaderboard]({aoc_api.get_leaderboard_url()})\n\n"
+                f"Use key `{LEADERBOARD_KEY}` to join the leaderboard!"
+            ),
+            inline=False
+        )
+
+    embed.set_footer(text="Happy coding and good luck!")
+    embed.set_thumbnail(url="https://adventofcode.com/favicon.png")
+    await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
+
+
 async def next_meeting(ctx: discord.Interaction):
     meeting_info = await calendar.get_next_meeting()
     calendar_hyperlink = f"[SWECC Public Calendar]({calendar.get_url()})"
@@ -64,3 +98,4 @@ def setup(client, context):
     client.tree.command(name="kanye")(kanye)
     client.tree.command(name="cat_fact")(cat_fact)
     client.tree.command(name="next_meeting")(next_meeting) 
+    client.tree.command(name="aoc_leaderboard")(aoc_leaderboard)

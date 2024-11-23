@@ -10,8 +10,10 @@ logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(
 class AdventOfCodeAPI:
     def __init__(self):
         load_dotenv()
-        today = datetime.now()
-        self.url = f"https://adventofcode.com/{today.year}/leaderboard/private/view/{os.getenv('AOC_LEADERBOARD_ID')}.json"
+        self.leaderboard_id = os.getenv('AOC_LEADERBOARD_ID')
+        self.year = datetime.now().year
+        self.url = f"https://adventofcode.com/{self.year}/leaderboard/private/view/{self.leaderboard_id}.json"
+        self.leaderboard_url = f"https://adventofcode.com/{self.year}/leaderboard/private/view/{self.leaderboard_id}"
         self.headers = {
                     "Content-Type": "application/json",
                     "Cookie": f"session={os.getenv('AOC_SESSION')}",
@@ -21,6 +23,10 @@ class AdventOfCodeAPI:
             "last_accessed": None,
             "data": None,
         }
+    
+
+    def get_leaderboard_url(self):
+        return self.leaderboard_url
 
 
     def parse_leaderboard(self, data):
