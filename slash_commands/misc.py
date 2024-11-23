@@ -1,4 +1,5 @@
 import discord
+from discord import app_commands
 from APIs.UselessAPIs import UselessAPIs
 from APIs.CalendarAPI import CalendarAPI
 from APIs.AdventOfCodeAPI import AdventOfCodeAPI
@@ -70,27 +71,40 @@ async def aoc_leaderboard(ctx: discord.Interaction):
     embed.set_thumbnail(url="https://adventofcode.com/favicon.png")
     await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
-async def leetcode_leaderboard(ctx: discord.Interaction):
-    leaderboard_data = swecc_api.leetcode_leaderboard(order_by="total")
+@app_commands.describe(order="Sort leaderboard by different metrics")
+@app_commands.choices(order=[
+    app_commands.Choice(name="Total Problems Solved (default)", value="total"),
+    app_commands.Choice(name="Easy Problems Solved", value="easy"),
+    app_commands.Choice(name="Medium Problems Solved", value="medium"),
+    app_commands.Choice(name="Hard Problems Solved", value="hard"),
+])
+async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
+    leaderboard_data = swecc_api.leetcode_leaderboard(order_by=order)
+
     embed = discord.Embed(
         title="🏆 Leetcode Leaderboard",
-        description="",
+        description=f"By: **{order.title()}**",
         color=discord.Color.gold()
     )
 
-    def format_user(user):
-        return f"**{user['user']['username']}** - Total: {user['total_solved']} | Easy: {user['easy_solved']} | Medium: {user['medium_solved']} | Hard: {user['hard_solved']}"
-
     if leaderboard_data:
-        leaderboard_text = "\n".join(
-            f"**#{index + 1}:** {format_user(member)}"
-            for index, member in enumerate(leaderboard_data[:10])
+        medals = ["🥇", "🥈", "🥉"] + [""] * 7
+        leaderboard_text = "\n\n".join(
+            f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
+            f"[**{user['user']['username']}**](https://leetcode.com/{user['user']['username']})\n"
+            f"└─ 🔢 Total: {user['total_solved']} | "
+            f"🟢 Easy: {user['easy_solved']} | "
+            f"🟡 Med: {user['medium_solved']} | "
+            f"🔴 Hard: {user['hard_solved']}"
+            for i, user in enumerate(leaderboard_data[:10])
         )
-        embed.add_field(
-            name="🥇 Leaderboard (Top 10)",
-            value=leaderboard_text,
-            inline=False
-        )
+        embed.add_field(name="Top 10", value=leaderboard_text, inline=False)
+
+    embed.add_field(
+        name="🔗 Want to join the leaderboard? Sign up below",
+        value=f"[interview.swecc.org](https://interview.swecc.org)",
+        inline=False
+    )
 
     await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
