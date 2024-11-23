@@ -101,7 +101,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
         embed.add_field(name="Top 10", value=leaderboard_text, inline=False)
 
     embed.add_field(
-        name="🔗 Want to sign up? Join below",
+        name="🔗 Want to join the leaderboard? Sign up below",
         value=f"[interview.swecc.org](https://interview.swecc.org)",
         inline=False
     )
