@@ -1,11 +1,12 @@
 import discord
 from APIs.SweccAPI import SweccAPI
 
+swecc = SweccAPI()
+
 class VerifyModal(discord.ui.Modal, title="Verify your account"):
     def __init__(self, bot_context):
         super().__init__(timeout=None)
         self.bot_context = bot_context
-        self.swecc = SweccAPI()
 
         self.code = discord.ui.TextInput(
             label="Username",
@@ -19,7 +20,7 @@ class VerifyModal(discord.ui.Modal, title="Verify your account"):
         username = interaction.user.name
         user_id = interaction.user.id
         auth_code = self.code.value
-        response = self.swecc.auth(username, user_id, auth_code)
+        response = swecc.auth(username, user_id, auth_code)
         if response == 200:
             await interaction.response.send_message("Authentication successful!", ephemeral=True)
             await self.bot_context.log(interaction, f"{interaction.user.display_name} has verified their account.")
@@ -35,7 +36,18 @@ class VerifyModal(discord.ui.Modal, title="Verify your account"):
 async def auth(ctx: discord.Interaction):
     await ctx.response.send_modal(VerifyModal(bot_context))
 
+async def reset_password(ctx: discord.Interaction):
+    url = await swecc.reset_password(ctx.user.name, ctx.user.id)
+    embed = discord.Embed(
+        title="Reset Password",
+        description=f"[Click here to reset your password]({url})",
+        color=discord.Color.blue(),
+    )
+    await bot_context.log(ctx, f"{ctx.user.display_name} has requested to reset their password.")
+    await ctx.response.send_message(embed=embed, ephemeral=True)
+
 def setup(client, context):
     global bot_context
     bot_context = context
     client.tree.command(name="verify")(auth)
+    client.tree.command(name="reset_password")(reset_password)

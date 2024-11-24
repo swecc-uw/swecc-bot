@@ -36,3 +36,13 @@ class SweccAPI:
             return response.json()
         else:
             return None
+        
+    async def reset_password(self, discord_username, id):
+        logging.info(f"Resetting password for {discord_username} with id {id}")
+
+        data = {
+            "discord_id": id,
+        }
+
+        response = requests.post(f"{self.url}/members/reset-password/", headers=self.headers, json=data)
+        return response.json().get("reset_url")
