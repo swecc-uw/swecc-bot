@@ -108,6 +108,41 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
 
     await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
+@app_commands.describe(order="Sort leaderboard by different metrics")
+@app_commands.choices(order=[
+    app_commands.Choice(name="Total Commits this Year (default)", value="commits"),
+    app_commands.Choice(name="Total PRs this year", value="prs"),
+    app_commands.Choice(name="Follower Count", value="followers"),
+])
+async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
+    leaderboard_data = swecc_api.github_leaderboard(order_by=order)
+
+    embed = discord.Embed(
+        title="🏆 Github Leaderboard",
+        description=f"By: **{order.title()}**",
+        color=discord.Color.green()
+    )
+
+    if leaderboard_data:
+        medals = ["🥇", "🥈", "🥉"] + [""] * 7
+        leaderboard_text = "\n\n".join(
+            f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
+            f"[**{user['user']['username']}**](https://github.com/{user['user']['username']})\n"
+            f"└─ 🔢 Total Commits: {user['total_commits']} | "
+            f"🔗 Total PRs: {user['total_prs']} | "
+            f"👥 Followers: {user['followers']}"
+            for i, user in enumerate(leaderboard_data[:10])
+        )
+        embed.add_field(name="Top 10", value=leaderboard_text, inline=False)
+
+    embed.add_field(
+        name="🔗 Want to join the leaderboard? Sign up below",
+        value=f"[interview.swecc.org](https://interview.swecc.org)",
+        inline=False
+    )
+
+    await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
+
 async def next_meeting(ctx: discord.Interaction):
     meeting_info = await calendar.get_next_meeting()
     calendar_hyperlink = f"[SWECC Public Calendar]({calendar.get_url()})"
@@ -138,3 +173,4 @@ def setup(client, context):
     client.tree.command(name="next_meeting")(next_meeting) 
     client.tree.command(name="aoc_leaderboard")(aoc_leaderboard)
     client.tree.command(name="leetcode_leaderboard")(leetcode_leaderboard)
+    client.tree.command(name="github_leaderboard")(github_leaderboard)
