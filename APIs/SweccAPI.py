@@ -46,4 +46,4 @@ class SweccAPI:
 
         response = requests.post(f"{self.url}/members/reset-password/", headers=self.headers, json=data)
         data = response.json()
-        return f"https://interview.swecc.org/#/{data['uuid']}/{data['token']}/"
+        return f"https://interview.swecc.org/#/password-reset-confirm/{data['uid']}/{data['token']}/"
