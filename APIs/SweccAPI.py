@@ -37,6 +37,20 @@ class SweccAPI:
         else:
             return None
         
+    def github_leaderboard(self, order_by="commits"):
+        logging.info("Fetching github leaderboard order by %s", order_by)
+
+        params = {"order_by": order_by }
+
+        response = requests.get(
+            f"{self.url}/leaderboard/github/", headers=self.headers, params=params
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+
     async def reset_password(self, discord_username, id):
         logging.info(f"Resetting password for {discord_username} with id {id}")
 
