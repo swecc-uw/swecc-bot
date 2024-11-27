@@ -134,7 +134,7 @@ async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
             f"👥 Followers: {user['followers']}"
             for i, user in enumerate(leaderboard_data[:10])
         ]
-        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]) + "\n", inline=False)
+        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False)
         embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
