@@ -79,7 +79,7 @@ async def aoc_leaderboard(ctx: discord.Interaction):
     app_commands.Choice(name="Hard Problems Solved", value="hard"),
 ])
 async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
-    leaderboard_data = swecc_api.leetcode_leaderboard(order_by=order)[:10]
+    leaderboard_data = swecc_api.leetcode_leaderboard(order_by=order)
 
     embed = discord.Embed(
         title="🏆 Leetcode Leaderboard",
