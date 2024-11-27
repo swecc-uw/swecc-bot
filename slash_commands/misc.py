@@ -99,7 +99,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
             for i, user in enumerate(leaderboard_data[:10])
         ]
         embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False)
-        embed.add_field(name="", value="\n\n" + "\n\n".join(leaderboard_text[5:]), inline=False)
+        embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
         name="🔗 Want to join the leaderboard? Sign up below",
