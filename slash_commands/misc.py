@@ -89,23 +89,17 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
 
     if leaderboard_data:
         medals = ["🥇", "🥈", "🥉"] + [""] * 7
-        # chunking to avoid discord embed field limit (1024)
-        for chunk_idx in range(0, len(leaderboard_data), 5):
-            chunk_data = leaderboard_data[chunk_idx:chunk_idx+5]
-            leaderboard_text = "\n\n".join(
-                f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
-                f"[**{user['user']['username']}**](https://leetcode.com/{user['user']['username']})\n"
-                f"└─ 🔢 Total: {user['total_solved']} | "
-                f"🟢 Easy: {user['easy_solved']} | "
-                f"🟡 Med: {user['medium_solved']} | "
-                f"🔴 Hard: {user['hard_solved']}"
-                for i, user in enumerate(chunk_data)
-            )
-            embed.add_field(
-                name=f"Top {chunk_idx+1}-{min(chunk_idx+5, len(leaderboard_data))}",
-                value=leaderboard_text,
-                inline=False
-            )
+        leaderboard_text = [
+            f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
+            f"[**{user['user']['username']}**](https://leetcode.com/{user['user']['username']})\n"
+            f"└─ 🔢 Total: {user['total_solved']} | "
+            f"🟢 Easy: {user['easy_solved']} | "
+            f"🟡 Med: {user['medium_solved']} | "
+            f"🔴 Hard: {user['hard_solved']}"
+            for i, user in enumerate(leaderboard_data[:10])
+        ]
+        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False)
+        embed.add_field(name="", value="\n\n" + "\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
         name="🔗 Want to join the leaderboard? Sign up below",
@@ -132,22 +126,16 @@ async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
 
     if leaderboard_data:
         medals = ["🥇", "🥈", "🥉"] + [""] * 7
-        # chunking to avoid discord embed field limit (1024)
-        for chunk_idx in range(0, len(leaderboard_data), 5):
-            chunk_data = leaderboard_data[chunk_idx:chunk_idx+5]
-            leaderboard_text = "\n\n".join(
-                f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
-                f"[**{user['user']['username']}**](https://github.com/{user['user']['username']})\n"
-                f"└─ 🔢 Total Commits: {user['total_commits']} | "
-                f"🔗 Total PRs: {user['total_prs']} | "
-                f"👥 Followers: {user['followers']}"
-                for i, user in enumerate(chunk_data)
-            )
-            embed.add_field(
-                name=f"Top {chunk_idx+1}-{min(chunk_idx+5, len(leaderboard_data))}",
-                value=leaderboard_text,
-                inline=False
-            )
+        leaderboard_text = [
+            f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
+            f"[**{user['user']['username']}**](https://github.com/{user['user']['username']})\n"
+            f"└─ 🔢 Total Commits: {user['total_commits']} | "
+            f"🔗 Total PRs: {user['total_prs']} | "
+            f"👥 Followers: {user['followers']}"
+            for i, user in enumerate(leaderboard_data[:10])
+        ]
+        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]) + "\n", inline=False)
+        embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
         name="🔗 Want to join the leaderboard? Sign up below",
