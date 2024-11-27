@@ -89,7 +89,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
 
     if leaderboard_data:
         medals = ["🥇", "🥈", "🥉"] + [""] * 7
-        leaderboard_text = "\n\n".join(
+        leaderboard_text = [
             f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
             f"[**{user['user']['username']}**](https://leetcode.com/{user['user']['username']})\n"
             f"└─ 🔢 Total: {user['total_solved']} | "
@@ -97,8 +97,9 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
             f"🟡 Med: {user['medium_solved']} | "
             f"🔴 Hard: {user['hard_solved']}"
             for i, user in enumerate(leaderboard_data[:10])
-        )
-        embed.add_field(name="Top 10", value=leaderboard_text, inline=False)
+        ]
+        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False)
+        embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
         name="🔗 Want to join the leaderboard? Sign up below",
@@ -115,7 +116,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
     app_commands.Choice(name="Follower Count", value="followers"),
 ])
 async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
-    leaderboard_data = swecc_api.github_leaderboard(order_by=order)
+    leaderboard_data = swecc_api.github_leaderboard(order_by=order)[:10]
 
     embed = discord.Embed(
         title="🏆 Github Leaderboard",
@@ -125,15 +126,16 @@ async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
 
     if leaderboard_data:
         medals = ["🥇", "🥈", "🥉"] + [""] * 7
-        leaderboard_text = "\n\n".join(
+        leaderboard_text = [
             f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
             f"[**{user['user']['username']}**](https://github.com/{user['user']['username']})\n"
             f"└─ 🔢 Total Commits: {user['total_commits']} | "
             f"🔗 Total PRs: {user['total_prs']} | "
             f"👥 Followers: {user['followers']}"
             for i, user in enumerate(leaderboard_data[:10])
-        )
-        embed.add_field(name="Top 10", value=leaderboard_text, inline=False)
+        ]
+        embed.add_field(name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False)
+        embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
         name="🔗 Want to join the leaderboard? Sign up below",
