@@ -53,7 +53,11 @@ async def send_daily_aoc_message(client):
             embed.set_footer(text=f"Leaderboard join key: {LEADERBOARD_KEY} ")
             embed.set_thumbnail(url="https://adventofcode.com/favicon.png")
 
-            await channel.send(embed=embed)
+            message = await channel.send(embed=embed)
+            await message.add_reaction('✅')
+            await message.add_reaction('❌')
+            thread = await message.create_thread(name="Solutions")
+            await thread.send("Post your solutions/discussion here!")
         except Exception as e:
             if admin_channel:
                 await admin_channel.send(f"Failed to send Advent of Code message: {e}")
