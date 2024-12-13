@@ -8,6 +8,7 @@ import slash_commands.admin as admin
 from settings.context import BotContext
 import asyncio
 from tasks.index import start_daily_tasks
+import admin.filter as filter
 
 load_dotenv()
 
@@ -15,6 +16,7 @@ swecc = SweccAPI()
 bot_context = BotContext()
 intents = discord.Intents.all()
 intents.message_content = True
+do_not_timeout = set()
 
 client = commands.Bot(command_prefix=bot_context.prefix, intents=intents)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
@@ -42,8 +44,13 @@ async def on_member_remove(member: discord.Member):
 
 @client.event
 async def on_message(message):
-    if message.author == client.user:
+    member = message.author
+    if member == client.user:
         return
+    
+    await filter.filter_message(message, bot_context)
+        
+
 
 @client.event
 async def on_thread_create(thread):
