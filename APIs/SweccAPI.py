@@ -14,6 +14,7 @@ class SweccAPI:
             os.getenv('NG_CHANNEL_ID'),
             os.getenv('INTERNSHIPS_CHANNEL_ID')
         }
+        self.COMPLETED_EMOJI = "✅"
 
     def auth(self, discord_username, id, username):
         logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
@@ -73,7 +74,7 @@ class SweccAPI:
             payload.emoji,
         )
 
-        if channel_id in self.reaction_channel_subscriptions and emoji.name == "✅":
+        if channel_id in self.reaction_channel_subscriptions and emoji.name == COMPLETED_EMOJI:
 
             data = {
                 "discord_id": user_id,
