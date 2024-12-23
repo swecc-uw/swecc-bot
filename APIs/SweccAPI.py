@@ -10,7 +10,11 @@ class SweccAPI:
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
         }
-    
+        self.reaction_channel_subscriptions = {
+            os.getenv('NG_CHANNEL_ID'),
+            os.getenv('INTERNSHIPS_CHANNEL_ID')
+        }
+
     def auth(self, discord_username, id, username):
         logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
 
@@ -36,7 +40,7 @@ class SweccAPI:
             return response.json()
         else:
             return None
-        
+
     def github_leaderboard(self, order_by="commits"):
         logging.info("Fetching github leaderboard order by %s", order_by)
 
@@ -61,3 +65,30 @@ class SweccAPI:
         response = requests.post(f"{self.url}/members/reset-password/", headers=self.headers, json=data)
         data = response.json()
         return f"https://interview.swecc.org/#/password-reset-confirm/{data['uid']}/{data['token']}/"
+
+    async def process_reaction_event(self, payload, type):
+        user_id, channel_id, emoji = (
+            payload.user_id,
+            payload.channel_id,
+            payload.emoji,
+        )
+
+        if channel_id in self.reaction_channel_subscriptions and emoji.name == "✅":
+
+            data = {
+                "discord_id": user_id,
+                "channel_id": channel_id,
+            }
+
+            try:
+                call = requests.post if type == "REACTION_ADD" else requests.delete
+
+                response = call(
+                    f"{self.url}/leaderboard/events/process/",
+                    headers=self.headers,
+                    json=data,
+                )
+            except Exception as e:
+                logging.error("Failed to send reaction event to backend: %s", e)
+        else:
+            logging.info("Ignoring reaction event in channel %s", channel_id)
