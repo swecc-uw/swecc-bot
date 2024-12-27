@@ -94,4 +94,5 @@ class SweccAPI:
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
         else:
-            logging.info("Ignoring reaction event in channel %s")
+            logging.info("Ignoring reaction event in channel %s, in channels: %s , correct emoji: %s",
+                         channel_id, channel_id in self.reaction_channel_subscriptions, self.COMPLETED_EMOJI == emoji.name)
