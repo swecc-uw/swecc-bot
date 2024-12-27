@@ -73,6 +73,15 @@ async def on_thread_create(thread):
                 await bot_context.log(message, f"{message.author.mention}'s resume post in {channelName} was deleted. File type: {message.attachments[0].content_type if message.attachments else 'none'}")
 
 
+@client.event
+async def on_raw_reaction_add(payload):
+    await swecc.process_reaction_event(payload, "REACTION_ADD")
+
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    await swecc.process_reaction_event(payload, "REACTION_REMOVE")
+
 misc.setup(client, bot_context)
 auth.setup(client, bot_context)
 admin.setup(client, bot_context)
