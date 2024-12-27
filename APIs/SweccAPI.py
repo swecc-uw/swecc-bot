@@ -74,7 +74,9 @@ class SweccAPI:
             payload.emoji,
         )
 
-        if channel_id in self.reaction_channel_subscriptions and emoji.name == COMPLETED_EMOJI:
+
+        logging.info(emoji.name, emoji.id, emoji)
+        if channel_id in self.reaction_channel_subscriptions and self.COMPLETED_EMOJI == emoji.name:
 
             data = {
                 "discord_id": user_id,
