@@ -11,10 +11,10 @@ class SweccAPI:
             "Content-Type": "application/json",
         }
         self.reaction_channel_subscriptions = {
-            os.getenv('NG_CHANNEL_ID'),
+            os.getenv('NEW_GRAD_CHANNEL_ID'),
             os.getenv('INTERNSHIPS_CHANNEL_ID')
         }
-        self.COMPLETED_EMOJI = ":white_check_mark:"
+        self.COMPLETED_EMOJI = "✅"
 
     def auth(self, discord_username, id, username):
         logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
@@ -94,4 +94,5 @@ class SweccAPI:
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
         else:
-            logging.info("Ignoring reaction event in channel %s", channel_id)
+            logging.info("Ignoring reaction event in channel %s, in channels: %s , correct emoji: %s",
+                         channel_id, channel_id in self.reaction_channel_subscriptions, self.COMPLETED_EMOJI == emoji.name)
