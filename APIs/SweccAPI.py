@@ -14,7 +14,7 @@ class SweccAPI:
             os.getenv('NG_CHANNEL_ID'),
             os.getenv('INTERNSHIPS_CHANNEL_ID')
         }
-        self.COMPLETED_EMOJI = "✅"
+        self.COMPLETED_EMOJI = ":white_check_mark:"
 
     def auth(self, discord_username, id, username):
         logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
