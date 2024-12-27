@@ -11,8 +11,8 @@ class SweccAPI:
             "Content-Type": "application/json",
         }
         self.reaction_channel_subscriptions = {
-            os.getenv('NEW_GRAD_CHANNEL_ID'),
-            os.getenv('INTERNSHIPS_CHANNEL_ID')
+            int(os.getenv('NEW_GRAD_CHANNEL_ID')),
+            int(os.getenv('INTERNSHIP_CHANNEL_ID')),
         }
         self.COMPLETED_EMOJI = "✅"
 
