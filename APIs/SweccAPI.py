@@ -110,7 +110,7 @@ class SweccAPI:
                 json=data,
             )
 
-            if response.status_code != 201:
-                logging.error("Failed to send message event to backend: %s", response.json())
+            if response.status_code != 202:
+                logging.error("Failed to send message event to backend, status code: %s", response.status_code)
         except Exception as e:
             logging.error("Failed to send message event to backend: %s", e)
