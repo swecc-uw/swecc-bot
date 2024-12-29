@@ -1,5 +1,5 @@
 import requests, os, logging
-
+import aiohttp
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
 
 class SweccAPI:
@@ -82,13 +82,15 @@ class SweccAPI:
             }
 
             try:
-                call = requests.post if type == "REACTION_ADD" else requests.delete
-
-                response = call(
-                    f"{self.url}/leaderboard/events/process/",
-                    headers=self.headers,
-                    json=data,
-                )
+                async with aiohttp.ClientSession() as session:
+                    call = session.post if type == "REACTION_ADD" else session.delete
+                    async with call(
+                        f"{self.url}/leaderboard/events/process/",
+                        headers=self.headers,
+                        json=data,
+                    ) as response:
+                        if response.status != 202:
+                            logging.error("Failed to send reaction event to backend, status code: %s", response.status)
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
 
@@ -101,16 +103,17 @@ class SweccAPI:
             "channel_id": channel_id,
         }
 
+        # todo: remove this log after successful testing in prod
         logging.info(f"Processing message event for {discord_id} in channel {channel_id}")
 
         try:
-            response = requests.post(
-                f"{self.url}/engagement/message/",
-                headers=self.headers,
-                json=data,
-            )
-
-            if response.status_code != 202:
-                logging.error("Failed to send message event to backend, status code: %s", response.status_code)
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.url}/engagement/message/",
+                    headers=self.headers,
+                    json=data
+                ) as response:
+                    if response.status != 202:
+                        logging.error("Failed to send message event to backend, status code: %s", response.status)
         except Exception as e:
             logging.error("Failed to send message event to backend: %s", e)
