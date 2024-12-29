@@ -91,3 +91,26 @@ class SweccAPI:
                 )
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
+
+    async def process_message_event(self, message):
+        discord_id = message.author.id
+        channel_id = message.channel.id
+
+        data = {
+            "discord_id": discord_id,
+            "channel_id": channel_id,
+        }
+
+        logging.info(f"Processing message event for {discord_id} in channel {channel_id}")
+
+        try:
+            response = requests.post(
+                f"{self.url}/engagement/message/",
+                headers=self.headers,
+                json=data,
+            )
+
+            if response.status_code != 201:
+                logging.error("Failed to send message event to backend: %s", response.json())
+        except Exception as e:
+            logging.error("Failed to send message event to backend: %s", e)

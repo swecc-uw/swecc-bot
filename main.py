@@ -49,9 +49,8 @@ async def on_message(message):
         return
     
     await filter.filter_message(message, bot_context)
+    await swecc.process_message_event(message)
         
-
-
 @client.event
 async def on_thread_create(thread):
     if thread.guild.id == bot_context.swecc_server:
