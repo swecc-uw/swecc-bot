@@ -36,7 +36,6 @@ jobs:
 
         docker run -d --name swecc-bot-be-container \
           --network swag-network \
-          -p 8000:8000 \
           -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
           -e SWECC_SERVER=${{ secrets.SWECC_SERVER }}
           -e ADMIN_CHANNEL=${{ secrets.ADMIN_CHANNEL }}
