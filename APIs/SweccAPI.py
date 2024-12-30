@@ -106,22 +106,20 @@ class SweccAPI:
                 logging.error("Failed to send reaction event to backend: %s", e)
 
     async def attend_event(self, discord_id, session_key: str):
-        # Mock behavior since API isn't merged yet
         logging.info(
-            "Attended event with key %s for user with discord ID %d",
+            "Attempting to attend event with key %s for user with discord ID %d",
             session_key,
             discord_id,
         )
 
-        # Random behavior to test possible outcomes of making a request
-        if random() > 0.5:
-            # Status Code, Data
-            return (200, {"success": True})
-        else:
-            possible_errors = [
-                "Session expired",
-                "Key not found",
-                "User not found",
-                "User already in session",
-            ]
-            return (400, {"error": choice(possible_errors)})
+        data = {"discord_id": discord_id, "session_key": session_key}
+
+        response = requests.post(
+            f"{self.url}/engagement/attend", headers=self.headers, json=data
+        )
+
+        try:
+            received_data = response.json()
+            return response.status_code, received_data
+        except requests.JSONDecodeError:
+            return None, {"error": "Unable to parse response body."}
