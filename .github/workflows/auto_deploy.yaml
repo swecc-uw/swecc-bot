@@ -1,27 +1,56 @@
-name: Deploy Bot Updates
+name: Push-to-EC2
 on:
   push:
     branches:
-      - main 
-
+      - main
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
+  build:
+    runs-on:
+      group: EC2
+      labels: [self-hosted, deploy]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout Repository
+      uses: actions/checkout@v2
 
-      - name: Setup SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            cd /home/${{ secrets.SSH_USERNAME }}/swecc-bot
-            git pull origin main
-            source venv/bin/activate
-            pip install -r requirements.txt
-            sudo systemctl daemon-reload
-            sudo systemctl restart swecc-bot.service
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:${{ github.sha }}
+
+    - name: Deploy application
+      run: |
+        docker stop swecc-bot-be-container || true
+        docker rm swecc-bot-be-container || true
+
+        docker pull ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
+
+        docker run -d --name swecc-bot-be-container \
+          --network swag-network \
+          -p 8000:8000 \
+          -e DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          -e SWECC_SERVER=${{ secrets.SWECC_SERVER }}
+          -e ADMIN_CHANNEL=${{ secrets.ADMIN_CHANNEL }}
+          -e LC_CHANNEL_ID=${{ secrets.LC_CHANNEL_ID }}
+          -e TRANSCRIPTS_CHANNEL=${{ secrets.TRANSCRIPTS_CHANNEL }}
+          -e SWECC_API_KEY=${{ secrets.SWECC_API_KEY }}
+          -e SWECC_URL=${{ secrets.SWECC_URL }}
+          -e PREFIX_COMMAND=${{ secrets.PREFIX_COMMAND }}
+          -e SWECC_RESUME_CHANNEL=${{ secrets.SWECC_RESUME_CHANNEL }}
+          -e CALENDAR_URL=${{ secrets.CALENDAR_URL }}
+          -e AOC_LEADERBOARD_ID=${{ secrets.AOC_LEADERBOARD_ID }}
+          -e AOC_SESSION=${{ secrets.AOC_SESSION }}
+          -e AOC_LEADERBOARD_KEY=${{ secrets.AOC_LEADERBOARD_KEY }}
+          -e INTERNSHIP_CHANNEL_ID=${{ secrets.INTERNSHIP_CHANNEL_ID }}
+          -e NEW_GRAD_CHANNEL_ID=${{ secrets.NEW_GRAD_CHANNEL_ID }}
+          --restart unless-stopped \
+          ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
