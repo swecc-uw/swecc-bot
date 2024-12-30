@@ -115,7 +115,7 @@ class SweccAPI:
         data = {"discord_id": discord_id, "session_key": session_key}
 
         response = requests.post(
-            f"{self.url}/engagement/attend", headers=self.headers, json=data
+            f"{self.url}/engagement/attendance/attend", headers=self.headers, json=data
         )
 
         try:
