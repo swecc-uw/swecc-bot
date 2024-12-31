@@ -190,7 +190,7 @@ async def next_meeting(ctx: discord.Interaction):
 async def attend(ctx: discord.Interaction, session_key: str):
     status, data = await swecc_api.attend_event(ctx.user.id, session_key)
 
-    if status == 200:
+    if status == 201:
         embed = discord.Embed(
             title="Success!",
             description=f"Your attendance was successfully registered!",
