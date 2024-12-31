@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  bot:
+    tty: true
+    build: .
+    networks:
+      - swecc-default
+    volumes:
+      - .:/app
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - SWECC_SERVER=${SWECC_SERVER}
+      - ADMIN_CHANNEL=${ADMIN_CHANNEL}
+      - LC_CHANNEL_ID=${LC_CHANNEL_ID}
+      - TRANSCRIPTS_CHANNEL=${TRANSCRIPTS_CHANNEL}
+      - SWECC_API_KEY=${SWECC_API_KEY}
+      - SWECC_URL=${SWECC_URL}
+      - PREFIX_COMMAND=${PREFIX_COMMAND}
+      - SWECC_RESUME_CHANNEL=${SWECC_RESUME_CHANNEL}
+      - CALENDAR_URL=${CALENDAR_URL}
+      - AOC_LEADERBOARD_ID=${AOC_LEADERBOARD_ID}
+      - AOC_SESSION=${AOC_SESSION}
+      - AOC_LEADERBOARD_KEY=${AOC_LEADERBOARD_KEY}
+      - INTERNSHIP_CHANNEL_ID=${INTERNSHIP_CHANNEL_ID}
+      - NEW_GRAD_CHANNEL_ID=${NEW_GRAD_CHANNEL_ID}
+
+networks:
+  swecc-default:
+    external: true
+    name: swecc-default

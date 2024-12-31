@@ -1,37 +1,46 @@
 import requests, os, logging
 import aiohttp
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
+
+from random import random, choice
+
+logging.basicConfig(
+    level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
+)
 
 class SweccAPI:
     def __init__(self):
-        self.url = os.getenv('SWECC_URL')
-        self.api_key = os.getenv('SWECC_API_KEY')
+        self.url = os.getenv("SWECC_URL")
+        self.api_key = os.getenv("SWECC_API_KEY")
         self.headers = {
             "Authorization": f"Api-Key {self.api_key}",
             "Content-Type": "application/json",
         }
         self.reaction_channel_subscriptions = {
-            int(os.getenv('NEW_GRAD_CHANNEL_ID')),
-            int(os.getenv('INTERNSHIP_CHANNEL_ID')),
+            int(os.getenv("NEW_GRAD_CHANNEL_ID")),
+            int(os.getenv("INTERNSHIP_CHANNEL_ID")),
         }
         self.COMPLETED_EMOJI = "✅"
 
     def auth(self, discord_username, id, username):
-        logging.info(f"Authenticating {discord_username} with id {id} and username {username}")
+        logging.info(
+            f"Authenticating {discord_username} with id {id} and username {username}"
+        )
 
         data = {
             "discord_id": id,
             "discord_username": discord_username,
-            "username": username
+            "username": username,
         }
 
-        response = requests.put(f"{self.url}/members/verify-discord/", headers=self.headers, json=data)
+        response = requests.put(
+            f"{self.url}/members/verify-discord/", headers=self.headers, json=data
+        )
         return response.status_code
 
     def leetcode_leaderboard(self, order_by="total"):
         logging.info("Fetching leetcode leaderboard order by %s", order_by)
 
-        params = {"order_by": order_by }
+        params = {"order_by": order_by}
 
         response = requests.get(
             f"{self.url}/leaderboard/leetcode/", headers=self.headers, params=params
@@ -45,7 +54,7 @@ class SweccAPI:
     def github_leaderboard(self, order_by="commits"):
         logging.info("Fetching github leaderboard order by %s", order_by)
 
-        params = {"order_by": order_by }
+        params = {"order_by": order_by}
 
         response = requests.get(
             f"{self.url}/leaderboard/github/", headers=self.headers, params=params
@@ -63,7 +72,9 @@ class SweccAPI:
             "discord_id": id,
         }
 
-        response = requests.post(f"{self.url}/members/reset-password/", headers=self.headers, json=data)
+        response = requests.post(
+            f"{self.url}/members/reset-password/", headers=self.headers, json=data
+        )
         data = response.json()
         return f"https://interview.swecc.org/#/password-reset-confirm/{data['uid']}/{data['token']}/"
 
@@ -74,7 +85,10 @@ class SweccAPI:
             payload.emoji,
         )
 
-        if channel_id in self.reaction_channel_subscriptions and self.COMPLETED_EMOJI == emoji.name:
+        if (
+            channel_id in self.reaction_channel_subscriptions
+            and self.COMPLETED_EMOJI == emoji.name
+        ):
 
             data = {
                 "discord_id": user_id,
@@ -117,3 +131,26 @@ class SweccAPI:
                         logging.error("Failed to send message event to backend, status code: %s", response.status)
         except Exception as e:
             logging.error("Failed to send message event to backend: %s", e)
+
+    async def attend_event(self, discord_id, session_key: str):
+        logging.info(
+            "Attempting to attend event with key %s for user with discord ID %d",
+            session_key,
+            discord_id,
+        )
+
+        data = {"discord_id": discord_id, "session_key": session_key}
+
+        response = requests.post(
+            f"{self.url}/engagement/attendance/attend", headers=self.headers, json=data
+        )
+
+        # Success
+        if response.status_code == 201:
+            return response.status_code, {}
+
+        try:
+            received_data = response.json()
+            return response.status_code, received_data
+        except requests.JSONDecodeError:
+            return None, {"error": "Unable to parse response body."}
