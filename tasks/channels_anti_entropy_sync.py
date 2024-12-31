@@ -15,21 +15,13 @@ dotenv.load_dotenv()
 
 swecc_api = SweccAPI()
 
-
-def get_channel_type(channel):
-    if isinstance(channel, discord.TextChannel):
-        return "TEXT"
-    elif isinstance(channel, discord.VoiceChannel):
-        return "VOICE"
-    elif isinstance(channel, discord.CategoryChannel):
-        return "CATEGORY"
-    elif isinstance(channel, discord.StageChannel):
-        return "STAGE"
-    elif isinstance(channel, discord.ForumChannel):
-        return "FORUM"
-    else:
-        return "UNKNOWN"
-
+ALLOWED_CHANNEL_TYPES = [
+    discord.TextChannel,
+    discord.VoiceChannel,
+    discord.CategoryChannel,
+    discord.StageChannel,
+    discord.ForumChannel,
+]
 
 async def sync(guild):
     await swecc_api.sync_channels(
@@ -38,10 +30,11 @@ async def sync(guild):
                 "channel_id": channel.id,
                 "channel_name": channel.name,
                 "category_id": channel.category_id,
-                "channel_type": get_channel_type(channel),
+                "channel_type": channel.type[0].upper(),
                 "guild_id": guild.id,
             }
             for channel in guild.channels
+            if any(isinstance(channel, channel_type) for channel_type in ALLOWED_CHANNEL_TYPES)
         ]
     )
 
@@ -54,11 +47,10 @@ def start_scheduled_task(client):
 
     @tasks.loop(hours=1)
     async def scheduled_sync():
-        for guild in client.guilds:
-            if guild.id == SWECC_SERVER_ID:
-                await sync(guild)
-                return
-        raise ValueError("SWECC server not found")
+        if (guild := client.get_guild(SWECC_SERVER_ID)) is None:
+            raise ValueError("SWECC server not found")
+
+        await sync(guild)
 
     @scheduled_sync.before_loop
     async def before():
