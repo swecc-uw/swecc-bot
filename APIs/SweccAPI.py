@@ -118,6 +118,10 @@ class SweccAPI:
             f"{self.url}/engagement/attendance/attend", headers=self.headers, json=data
         )
 
+        # Success
+        if response.status_code == 201:
+            return response.status_code, {}
+
         try:
             received_data = response.json()
             return response.status_code, received_data
