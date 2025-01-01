@@ -7,6 +7,7 @@ logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
 )
 
+
 class SweccAPI:
     def __init__(self):
         self.url = os.getenv("SWECC_URL")
@@ -104,7 +105,10 @@ class SweccAPI:
                         json=data,
                     ) as response:
                         if response.status != 202:
-                            logging.error("Failed to send reaction event to backend, status code: %s", response.status)
+                            logging.error(
+                                "Failed to send reaction event to backend, status code: %s",
+                                response.status,
+                            )
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
 
@@ -118,17 +122,20 @@ class SweccAPI:
         }
 
         # todo: remove this log after successful testing in prod
-        logging.info(f"Processing message event for {discord_id} in channel {channel_id}")
+        logging.info(
+            f"Processing message event for {discord_id} in channel {channel_id}"
+        )
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
-                    f"{self.url}/engagement/message/",
-                    headers=self.headers,
-                    json=data
+                    f"{self.url}/engagement/message/", headers=self.headers, json=data
                 ) as response:
                     if response.status != 202:
-                        logging.error("Failed to send message event to backend, status code: %s", response.status)
+                        logging.error(
+                            "Failed to send message event to backend, status code: %s",
+                            response.status,
+                        )
         except Exception as e:
             logging.error("Failed to send message event to backend: %s", e)
 
@@ -154,3 +161,23 @@ class SweccAPI:
             return response.status_code, received_data
         except requests.JSONDecodeError:
             return None, {"error": "Unable to parse response body."}
+
+    async def sync_channels(self, channels):
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.url}/metasync/discord/anti-entropy/",
+                headers=self.headers,
+                json=channels,
+            ) as response:
+                if response.status != 200:
+                    logging.error(
+                        "Failed to sync channels, status code: %s, json: %s",
+                        response.status,
+                        await response.json(),
+                    )
+                else:
+                    logging.info(
+                        "Channels synced successfully, json: %s", await response.json()
+                    )
+
+                return response.status
