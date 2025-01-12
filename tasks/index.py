@@ -9,5 +9,5 @@ class start_daily_tasks:
 
     def start_tasks(self):
         lc_start_scheduled_task(self.client, self.bot_context.admin_channel)
-        aoc_start_scheduled_task(self.client)
         sync_channels_start_scheduled_task(self.client)
+        # aoc_start_scheduled_task(self.client)

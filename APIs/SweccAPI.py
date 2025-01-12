@@ -93,7 +93,7 @@ class SweccAPI:
         return f"https://interview.swecc.org/#/password-reset-confirm/{data['uid']}/{data['token']}/"
 
     async def process_reaction_event(self, payload, type):
-        session = await self.get_session()
+        session = self.get_session()
 
         user_id, channel_id, emoji = (
             payload.user_id,
@@ -135,7 +135,7 @@ class SweccAPI:
             "channel_id": channel_id,
         }
 
-        session = await self.get_session()
+        session = self.get_session()
 
         # todo: remove this log after successful testing in prod
         logging.info(
@@ -179,7 +179,7 @@ class SweccAPI:
             return None, {"error": "Unable to parse response body."}
 
     async def sync_channels(self, channels):
-        session = await self.get_session()
+        session = self.get_session()
 
         try:
             async with session.post(

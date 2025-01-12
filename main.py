@@ -84,7 +84,7 @@ admin.setup(client, bot_context)
 async def main():
     async with aiohttp.ClientSession() as session, client:
         client.session = session
-        await swecc.set_session(session)
+        swecc.set_session(session)
 
         try:
             start_daily_tasks(client, bot_context).start_tasks()
