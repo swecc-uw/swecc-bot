@@ -7,8 +7,12 @@ logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
 )
 
+aio_session_global = [None]
+
 
 class SweccAPI:
+    global aio_session_global
+
     def __init__(self):
         self.url = os.getenv("SWECC_URL")
         self.api_key = os.getenv("SWECC_API_KEY")
@@ -21,6 +25,15 @@ class SweccAPI:
             int(os.getenv("INTERNSHIP_CHANNEL_ID")),
         }
         self.COMPLETED_EMOJI = "✅"
+
+    def set_session(self, session: aiohttp.ClientSession):
+        aio_session_global[0] = session
+
+    def get_session(self):
+        if not aio_session_global[0]:
+            logging.error("SweccAPI session not set")
+            raise Exception("aiohttp session not set")
+        return aio_session_global[0]
 
     def auth(self, discord_username, id, username):
         logging.info(
@@ -80,6 +93,8 @@ class SweccAPI:
         return f"https://interview.swecc.org/#/password-reset-confirm/{data['uid']}/{data['token']}/"
 
     async def process_reaction_event(self, payload, type):
+        session = self.get_session()
+
         user_id, channel_id, emoji = (
             payload.user_id,
             payload.channel_id,
@@ -97,18 +112,17 @@ class SweccAPI:
             }
 
             try:
-                async with aiohttp.ClientSession() as session:
-                    call = session.post if type == "REACTION_ADD" else session.delete
-                    async with call(
-                        f"{self.url}/leaderboard/events/process/",
-                        headers=self.headers,
-                        json=data,
-                    ) as response:
-                        if response.status != 202:
-                            logging.error(
-                                "Failed to send reaction event to backend, status code: %s",
-                                response.status,
-                            )
+                call = session.post if type == "REACTION_ADD" else session.delete
+                async with call(
+                    f"{self.url}/leaderboard/events/process/",
+                    headers=self.headers,
+                    json=data,
+                ) as response:
+                    if response.status != 202:
+                        logging.error(
+                            "Failed to send reaction event to backend, status code: %s",
+                            response.status,
+                        )
             except Exception as e:
                 logging.error("Failed to send reaction event to backend: %s", e)
 
@@ -121,21 +135,23 @@ class SweccAPI:
             "channel_id": channel_id,
         }
 
+        session = self.get_session()
+
         # todo: remove this log after successful testing in prod
         logging.info(
             f"Processing message event for {discord_id} in channel {channel_id}"
         )
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.url}/engagement/message/", headers=self.headers, json=data
-                ) as response:
-                    if response.status != 202:
-                        logging.error(
-                            "Failed to send message event to backend, status code: %s",
-                            response.status,
-                        )
+
+            async with session.post(
+                f"{self.url}/engagement/message/", headers=self.headers, json=data
+            ) as response:
+                if response.status != 202:
+                    logging.error(
+                        "Failed to send message event to backend, status code: %s",
+                        response.status,
+                    )
         except Exception as e:
             logging.error("Failed to send message event to backend: %s", e)
 
@@ -163,7 +179,9 @@ class SweccAPI:
             return None, {"error": "Unable to parse response body."}
 
     async def sync_channels(self, channels):
-        async with aiohttp.ClientSession() as session:
+        session = self.get_session()
+
+        try:
             async with session.post(
                 f"{self.url}/metasync/discord/anti-entropy/",
                 headers=self.headers,
@@ -181,3 +199,5 @@ class SweccAPI:
                     )
 
                 return response.status
+        except Exception as e:
+            logging.error("Failed to sync channels: %s", e)
