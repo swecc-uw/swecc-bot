@@ -30,6 +30,9 @@ class SweccAPI:
         aio_session_global[0] = session
 
     def get_session(self):
+        if not aio_session_global[0]:
+            logging.error("SweccAPI session not set")
+            raise Exception("aiohttp session not set")
         return aio_session_global[0]
 
     def auth(self, discord_username, id, username):
@@ -92,12 +95,6 @@ class SweccAPI:
     async def process_reaction_event(self, payload, type):
         session = await self.get_session()
 
-        if not session:
-            logging.error(
-                f"SweccAPI session {str(session)} not set, unable to process reaction event"
-            )
-            return
-
         user_id, channel_id, emoji = (
             payload.user_id,
             payload.channel_id,
@@ -139,12 +136,6 @@ class SweccAPI:
         }
 
         session = await self.get_session()
-
-        if not session:
-            logging.error(
-                f"SweccAPI session {str(session)} not set, unable to process message event for {discord_id} in channel {channel_id}"
-            )
-            return
 
         # todo: remove this log after successful testing in prod
         logging.info(
@@ -189,12 +180,6 @@ class SweccAPI:
 
     async def sync_channels(self, channels):
         session = await self.get_session()
-
-        if not session:
-            logging.error(
-                f"SweccAPI session {str(session)} not set, unable to sync channels"
-            )
-            return
 
         try:
             async with session.post(
