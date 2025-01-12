@@ -1,3 +1,4 @@
+import aiohttp
 import discord, logging
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -29,11 +30,6 @@ async def on_ready():
         logging.info(f"Synced {synced} commands")
     except Exception as e:
         logging.info(f"Failed to sync commands: {e}")
-    try:
-        start_daily_tasks(client, bot_context)
-        logging.info("Started daily tasks successfully")
-    except:
-        logging.info(f"Failed to start daily tasks: {e}")
 
     logging.info("Bot is ready")
 
@@ -85,4 +81,17 @@ misc.setup(client, bot_context)
 auth.setup(client, bot_context)
 admin.setup(client, bot_context)
 
-client.run(bot_context.token)
+async def main():
+    async with aiohttp.ClientSession() as session, client:
+        client.session = session
+        await swecc.set_session(session)
+
+        try:
+            start_daily_tasks(client, bot_context).start_tasks()
+            logging.info("Started daily tasks successfully!!!")
+        except Exception as e:
+            logging.info(f"Failed to start daily tasks: {e}")
+
+        await client.start(bot_context.token)
+
+asyncio.run(main())
