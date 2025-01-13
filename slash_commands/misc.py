@@ -115,8 +115,8 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
         embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
-        name="🔗 Want to join the leaderboard? Sign up below",
-        value=f"[interview.swecc.org](https://interview.swecc.org)",
+        name="🔗 View the full leaderboard below!",
+        value=f"[leaderboard.swecc.org](https://leaderboard.swecc.org)",
         inline=False,
     )
 
@@ -156,8 +156,8 @@ async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
         embed.add_field(name="", value="\n\n".join(leaderboard_text[5:]), inline=False)
 
     embed.add_field(
-        name="🔗 Want to join the leaderboard? Sign up below",
-        value=f"[interview.swecc.org](https://interview.swecc.org)",
+        name="🔗 View the full leaderboard below!",
+        value=f"[leaderboard.swecc.org](https://leaderboard.swecc.org)",
         inline=False,
     )
 
