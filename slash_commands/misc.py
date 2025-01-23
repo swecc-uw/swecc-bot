@@ -107,7 +107,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
             f"🟢 Easy: {user['easy_solved']} | "
             f"🟡 Med: {user['medium_solved']} | "
             f"🔴 Hard: {user['hard_solved']}"
-            for i, user in enumerate(leaderboard_data[:10])
+            for i, user in enumerate(leaderboard_data["results"][:10])
         ]
         embed.add_field(
             name="Top 10", value="\n\n".join(leaderboard_text[:5]), inline=False
