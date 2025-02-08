@@ -201,3 +201,35 @@ class SweccAPI:
                 return response.status
         except Exception as e:
             logging.error("Failed to sync channels: %s", e)
+
+    async def update_cohort_stats(self, discord_id, stat_url):
+        session = self.get_session()
+
+        data = {"discord_id": discord_id}
+
+        try:
+
+            async with session.put(
+                f"{self.url}/engagement/cohort/{stat_url}",
+                headers=self.headers,
+                json=data,
+            ) as response:
+                response_json = await response.json()
+                print(response_json)
+                if response.status != 200:
+                    logging.error(
+                        "Failed to update cohort stats, status code: %s, json: %s",
+                        response.status,
+                        response_json,
+                    )
+                    return None, {"message": "Failed to update cohort stats"}
+                else:
+                    logging.info(
+                        "Cohort stats updated successfully, json: %s",
+                        response_json,
+                    )
+
+                return response_json["cohort_stats"], None
+        except Exception as e:
+            logging.error("Failed to update cohort stats: %s", e)
+            return {}, {"message": "Failed to update cohort stats"}
