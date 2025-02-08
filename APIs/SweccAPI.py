@@ -215,7 +215,6 @@ class SweccAPI:
                 json=data,
             ) as response:
                 response_json = await response.json()
-                print(response_json)
                 if response.status != 200:
                     logging.error(
                         "Failed to update cohort stats, status code: %s, json: %s",
