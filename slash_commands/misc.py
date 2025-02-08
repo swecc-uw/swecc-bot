@@ -6,6 +6,7 @@ from APIs.AdventOfCodeAPI import AdventOfCodeAPI
 from APIs.SweccAPI import SweccAPI
 import os
 from dotenv import load_dotenv
+from .utils import handle_cohort_stat_update
 
 useless = UselessAPIs()
 calendar = CalendarAPI()
@@ -210,6 +211,71 @@ async def attend(ctx: discord.Interaction, session_key: str):
         await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
 
+async def daily_check(ctx: discord.Interaction):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "dailycheck")
+
+    await handle_cohort_stat_update(
+        ctx,
+        data,
+        error,
+        bot_context,
+        "Daily Check",
+        "Your daily check was successfully recorded!",
+    )
+
+
+async def online_assessment(ctx: discord.Interaction, amt: int):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"oa/{amt}")
+
+    await handle_cohort_stat_update(
+        ctx,
+        data,
+        error,
+        bot_context,
+        title="Online Assessment",
+        description="Your online assessment was successfully recorded!",
+    )
+
+
+async def interview(ctx: discord.Interaction, amt: int):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"interview/{amt}")
+
+    await handle_cohort_stat_update(
+        ctx,
+        data,
+        error,
+        bot_context,
+        "Interview",
+        "Your interview was successfully recorded!",
+    )
+
+
+async def offer(ctx: discord.Interaction, amt: int):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"offer/{amt}")
+
+    await handle_cohort_stat_update(
+        ctx,
+        data,
+        error,
+        bot_context,
+        "Offer",
+        "Your offer was successfully recorded! (congrats! 🎉)",
+    )
+
+
+async def apply(ctx: discord.Interaction, amt: int):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"apply/{amt}")
+
+    await handle_cohort_stat_update(
+        ctx,
+        data,
+        error,
+        bot_context,
+        "Application",
+        "Your application was successfully recorded!",
+    )
+
+
 def setup(client, context):
     global bot_context
     bot_context = context
@@ -224,3 +290,8 @@ def setup(client, context):
     client.tree.command(name="leetcode_leaderboard")(leetcode_leaderboard)
     client.tree.command(name="github_leaderboard")(github_leaderboard)
     client.tree.command(name="attend")(attend)
+    client.tree.command(name="daily_check")(daily_check)
+    client.tree.command(name="online_assessment")(online_assessment)
+    client.tree.command(name="interview")(interview)
+    client.tree.command(name="offer")(offer)
+    client.tree.command(name="application")(apply)
