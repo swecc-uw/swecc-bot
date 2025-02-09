@@ -211,8 +211,10 @@ async def attend(ctx: discord.Interaction, session_key: str):
         await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
 
-async def daily_check(ctx: discord.Interaction):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "dailycheck")
+async def daily_check(ctx: discord.Interaction, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, cohort_name, "dailycheck"
+    )
 
     await handle_cohort_stat_update(
         ctx,
@@ -224,8 +226,10 @@ async def daily_check(ctx: discord.Interaction):
     )
 
 
-async def online_assessment(ctx: discord.Interaction, amt: int):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"oa/{amt}")
+async def online_assessment(ctx: discord.Interaction, amt: int, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, cohort_name, f"oa/{amt}"
+    )
 
     await handle_cohort_stat_update(
         ctx,
@@ -237,8 +241,10 @@ async def online_assessment(ctx: discord.Interaction, amt: int):
     )
 
 
-async def interview(ctx: discord.Interaction, amt: int):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"interview/{amt}")
+async def interview(ctx: discord.Interaction, amt: int, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, cohort_name, f"interview/{amt}"
+    )
 
     await handle_cohort_stat_update(
         ctx,
@@ -250,8 +256,10 @@ async def interview(ctx: discord.Interaction, amt: int):
     )
 
 
-async def offer(ctx: discord.Interaction, amt: int):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"offer/{amt}")
+async def offer(ctx: discord.Interaction, amt: int, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, cohort_name, f"offer/{amt}"
+    )
 
     await handle_cohort_stat_update(
         ctx,
@@ -263,8 +271,10 @@ async def offer(ctx: discord.Interaction, amt: int):
     )
 
 
-async def apply(ctx: discord.Interaction, amt: int):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, f"apply/{amt}")
+async def apply(ctx: discord.Interaction, amt: int, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, cohort_name, f"apply/{amt}"
+    )
 
     await handle_cohort_stat_update(
         ctx,
