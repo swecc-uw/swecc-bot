@@ -232,3 +232,25 @@ class SweccAPI:
         except Exception as e:
             logging.error("Failed to update cohort stats: %s", e)
             return {}, {"message": "Failed to update cohort stats"}
+
+
+    async def get_cohort_stats(self, discord_id=None):
+        session = self.get_session()
+
+        try:
+            async with session.get(
+                f"{self.url}/cohorts/stats{f'?discord_id={discord_id}' if discord_id else ''}",
+                headers=self.headers,
+            ) as response:
+                if response.status != 200:
+                    logging.error(
+                        "Failed to get cohort stats, status code: %s, json: %s",
+                        response.status,
+                        await response.json(),
+                    )
+                    return None
+                return await response.json()
+
+        except Exception as e:
+            logging.error("Failed to get cohort stats: %s", e)
+            return None
