@@ -210,17 +210,23 @@ async def attend(ctx: discord.Interaction, session_key: str):
 
         await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
+
 async def cohort(ctx: discord.Interaction, show_all: bool = False):
     try:
         await ctx.response.defer(ephemeral=bot_context.ephemeral)
-        cohorts = await swecc_api.get_cohort_stats(ctx.user.id if not show_all else None)
+        cohorts = await swecc_api.get_cohort_stats(
+            ctx.user.id if not show_all else None
+        )
 
         if not cohorts:
             embed = discord.Embed(
                 title="No Cohorts Found",
-                description="You are not currently enrolled in any cohorts." if not show_all
-                          else "No cohorts are available.",
-                color=discord.Color.red()
+                description=(
+                    "You are not currently enrolled in any cohorts."
+                    if not show_all
+                    else "No cohorts are available."
+                ),
+                color=discord.Color.red(),
             )
             await ctx.followup.send(embed=embed, ephemeral=bot_context.ephemeral)
             return
@@ -228,12 +234,10 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
         for cohort in cohorts:
             cohort_name = cohort["cohort"]["name"]
             stats = cohort["stats"]
-            total_apps = stats['applications']
-            success_rate = (stats['offers'] / total_apps * 100) if total_apps > 0 else 0
+            total_apps = stats["applications"]
+            success_rate = (stats["offers"] / total_apps * 100) if total_apps > 0 else 0
 
-            formatted_stats = {
-                key: f"{value:,}" for key, value in stats.items()
-            }
+            formatted_stats = {key: f"{value:,}" for key, value in stats.items()}
 
             bar_length = 10
             filled_blocks = int(bar_length * success_rate / 100)
@@ -242,7 +246,7 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
             embed = discord.Embed(
                 title=f"🎓 {cohort_name}",
                 color=discord.Color.blurple(),
-                timestamp=ctx.created_at
+                timestamp=ctx.created_at,
             )
 
             stats_text = (
@@ -255,10 +259,7 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
             embed.add_field(name="Statistics", value=stats_text, inline=False)
 
             if total_apps > 0:
-                progress_text = (
-                    f"Success Rate: {success_rate:.1f}%\n"
-                    f"{progress_bar}"
-                )
+                progress_text = f"Success Rate: {success_rate:.1f}%\n" f"{progress_bar}"
                 embed.add_field(name="Progress", value=progress_text, inline=True)
 
             embed.set_footer(text=f"Requested by {ctx.user.display_name}")
@@ -269,9 +270,10 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
         error_embed = discord.Embed(
             title="Error",
             description="An error occurred while fetching cohort statistics. Please try again later.",
-            color=discord.Color.red()
+            color=discord.Color.red(),
         )
         await ctx.followup.send(embed=error_embed, ephemeral=True)
+
 
 async def daily_check(ctx: discord.Interaction, cohort_name: str):
     data, error = await swecc_api.update_cohort_stats(
@@ -288,10 +290,8 @@ async def daily_check(ctx: discord.Interaction, cohort_name: str):
     )
 
 
-async def online_assessment(ctx: discord.Interaction, amt: int, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, f"oa/{amt}"
-    )
+async def online_assessment(ctx: discord.Interaction, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "oa")
 
     await handle_cohort_stat_update(
         ctx,
@@ -303,9 +303,9 @@ async def online_assessment(ctx: discord.Interaction, amt: int, cohort_name: str
     )
 
 
-async def interview(ctx: discord.Interaction, amt: int, cohort_name: str):
+async def interview(ctx: discord.Interaction, cohort_name: str):
     data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, f"interview/{amt}"
+        ctx.user.id, cohort_name, "interview"
     )
 
     await handle_cohort_stat_update(
@@ -318,10 +318,8 @@ async def interview(ctx: discord.Interaction, amt: int, cohort_name: str):
     )
 
 
-async def offer(ctx: discord.Interaction, amt: int, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, f"offer/{amt}"
-    )
+async def offer(ctx: discord.Interaction, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "offer")
 
     await handle_cohort_stat_update(
         ctx,
@@ -333,10 +331,8 @@ async def offer(ctx: discord.Interaction, amt: int, cohort_name: str):
     )
 
 
-async def apply(ctx: discord.Interaction, amt: int, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, f"apply/{amt}"
-    )
+async def apply(ctx: discord.Interaction, cohort_name: str):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "apply")
 
     await handle_cohort_stat_update(
         ctx,
