@@ -210,6 +210,68 @@ async def attend(ctx: discord.Interaction, session_key: str):
 
         await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
 
+async def cohort(ctx: discord.Interaction, show_all: bool = False):
+    try:
+        await ctx.response.defer(ephemeral=bot_context.ephemeral)
+        cohorts = await swecc_api.get_cohort_stats(ctx.user.id if not show_all else None)
+
+        if not cohorts:
+            embed = discord.Embed(
+                title="No Cohorts Found",
+                description="You are not currently enrolled in any cohorts." if not show_all
+                          else "No cohorts are available.",
+                color=discord.Color.red()
+            )
+            await ctx.followup.send(embed=embed, ephemeral=bot_context.ephemeral)
+            return
+
+        for cohort in cohorts:
+            cohort_name = cohort["cohort"]["name"]
+            stats = cohort["stats"]
+            total_apps = stats['applications']
+            success_rate = (stats['offers'] / total_apps * 100) if total_apps > 0 else 0
+
+            formatted_stats = {
+                key: f"{value:,}" for key, value in stats.items()
+            }
+
+            bar_length = 10
+            filled_blocks = int(bar_length * success_rate / 100)
+            progress_bar = "▰" * filled_blocks + "▱" * (bar_length - filled_blocks)
+
+            embed = discord.Embed(
+                title=f"🎓 {cohort_name}",
+                color=discord.Color.blurple(),
+                timestamp=ctx.created_at
+            )
+
+            stats_text = (
+                f"📝 **Applications:** {formatted_stats['applications']}\n"
+                f"💻 **Online Assessments:** {formatted_stats['onlineAssessments']}\n"
+                f"🎯 **Interviews:** {formatted_stats['interviews']}\n"
+                f"🎊 **Offers:** {formatted_stats['offers']}\n"
+                f"✅ **Daily Checks:** {formatted_stats['dailyChecks']}"
+            )
+            embed.add_field(name="Statistics", value=stats_text, inline=False)
+
+            if total_apps > 0:
+                progress_text = (
+                    f"Success Rate: {success_rate:.1f}%\n"
+                    f"{progress_bar}"
+                )
+                embed.add_field(name="Progress", value=progress_text, inline=True)
+
+            embed.set_footer(text=f"Requested by {ctx.user.display_name}")
+
+            await ctx.followup.send(embed=embed, ephemeral=bot_context.ephemeral)
+
+    except Exception as e:
+        error_embed = discord.Embed(
+            title="Error",
+            description="An error occurred while fetching cohort statistics. Please try again later.",
+            color=discord.Color.red()
+        )
+        await ctx.followup.send(embed=error_embed, ephemeral=True)
 
 async def daily_check(ctx: discord.Interaction, cohort_name: str):
     data, error = await swecc_api.update_cohort_stats(
@@ -305,3 +367,4 @@ def setup(client, context):
     client.tree.command(name="interview")(interview)
     client.tree.command(name="offer")(offer)
     client.tree.command(name="application")(apply)
+    client.tree.command(name="cohort")(cohort)
