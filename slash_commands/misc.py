@@ -254,7 +254,8 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
                 f"💻 **Online Assessments:** {formatted_stats['onlineAssessments']}\n"
                 f"🎯 **Interviews:** {formatted_stats['interviews']}\n"
                 f"🎊 **Offers:** {formatted_stats['offers']}\n"
-                f"✅ **Daily Checks:** {formatted_stats['dailyChecks']}"
+                f"✅ **Daily Checks:** {formatted_stats['dailyChecks']}\n"
+                f"🔥 **Streak** {formatted_stats['streak']}"
             )
             embed.add_field(name="Statistics", value=stats_text, inline=False)
 
