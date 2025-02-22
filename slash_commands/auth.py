@@ -3,15 +3,16 @@ from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
 
-class VerifyModal(discord.ui.Modal, title="Verify your account"):
+
+class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
     def __init__(self, bot_context):
         super().__init__(timeout=None)
         self.bot_context = bot_context
 
         self.code = discord.ui.TextInput(
             label="Username",
-            style=discord.TextStyle.short,  
-            placeholder="Enter your website username:",
+            style=discord.TextStyle.short,
+            placeholder="Enter your website username.",
         )
 
         self.add_item(self.code)
@@ -22,19 +23,41 @@ class VerifyModal(discord.ui.Modal, title="Verify your account"):
         auth_code = self.code.value
         response = swecc.auth(username, user_id, auth_code)
         if response == 200:
-            await interaction.response.send_message("Authentication successful!", ephemeral=True)
-            await self.bot_context.log(interaction, f"{interaction.user.display_name} has verified their account.")
+            await interaction.response.send_message(
+                "Authentication successful!", ephemeral=True
+            )
+            await self.bot_context.log(
+                interaction,
+                f"{interaction.user.display_name} has verified their account.",
+            )
             return
-        await interaction.response.send_message("Authentication failed. Please try again.", ephemeral=True)
-        await self.bot_context.log(interaction, f"{interaction.user.display_name} has failed to verified their account. - {response}")
+        await interaction.response.send_message(
+            f"Authentication failed. Please try again. Verify the discord username on the website is **{username}**.",
+            ephemeral=True,
+        )
+        await self.bot_context.log(
+            interaction,
+            f"{interaction.user.display_name} has failed to verified their account. - {response}.",
+        )
 
     async def on_error(self, interaction: discord.Interaction, error: Exception):
         if not interaction.response.is_done():
-            await interaction.response.send_message(f"Something went wrong", ephemeral=True)
-            await self.bot_context.log(interaction, f"{interaction.user.display_name} has failed to verified their account. - {error}")
+            await interaction.response.send_message(
+                f"Something went wrong", ephemeral=True
+            )
+            await self.bot_context.log(
+                interaction,
+                f"{interaction.user.display_name} has failed to verified their account. - {error}",
+            )
+
 
 async def auth(ctx: discord.Interaction):
-    await ctx.response.send_modal(VerifyModal(bot_context))
+    await ctx.response.send_modal(
+        VerifyModal(
+            bot_context,
+        )
+    )
+
 
 async def reset_password(ctx: discord.Interaction):
     url = await swecc.reset_password(ctx.user.name, ctx.user.id)
@@ -43,8 +66,11 @@ async def reset_password(ctx: discord.Interaction):
         description=f"[Click here to reset your password]({url})",
         color=discord.Color.blue(),
     )
-    await bot_context.log(ctx, f"{ctx.user.display_name} has requested to reset their password.")
+    await bot_context.log(
+        ctx, f"{ctx.user.display_name} has requested to reset their password."
+    )
     await ctx.response.send_message(embed=embed, ephemeral=True)
+
 
 def setup(client, context):
     global bot_context
