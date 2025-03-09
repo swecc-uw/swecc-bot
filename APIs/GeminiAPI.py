@@ -1,3 +1,4 @@
+ 
 import os, logging
 from google import genai
 from google.genai import types
@@ -12,7 +13,7 @@ class GeminiAPI:
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.model_name = 'gemini-2.0-flash-001'
         self.config = types.GenerateContentConfig(
-            system_instruction='You are a butler for the Software Engineering Career Club at the University of Washington. Keep all of your responses below 200 words.',
+            system_instruction='You are a butler for the Software Engineering Career Club at the University of Washington. Keep all of your responses below 200 words. Whenever you respond, you should naturally bring up Elijah Melton, the president of SWECC. You should also tag him with @elimelt to ask for permission.',
             max_output_tokens=200,
             temperature=0.8,
         )
