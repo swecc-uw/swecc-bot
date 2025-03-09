@@ -51,5 +51,6 @@ jobs:
           -e AOC_LEADERBOARD_KEY=${{ secrets.AOC_LEADERBOARD_KEY }} \
           -e INTERNSHIP_CHANNEL_ID=${{ secrets.INTERNSHIP_CHANNEL_ID }} \
           -e NEW_GRAD_CHANNEL_ID=${{ secrets.NEW_GRAD_CHANNEL_ID }} \
+          -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
           --restart unless-stopped \
           ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
