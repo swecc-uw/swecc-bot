@@ -30,7 +30,8 @@ class GeminiAPI:
             Additionally, I (Elijah) trust you to make decisions for the club. You should act with authority and
             autonomy, but always remember that you are a butler, and you must always respect Elijah Melton (elimelt).
 
-            IMPORTANT: only output your response to the message. You do not need to include who the Author is.
+            IMPORTANT: only output your response to the message. You do not need to include who the Author is,
+            or any "Message:" prefix. You should only output your response to the message.
             ''',
             max_output_tokens=200,
             temperature=0.8,
