@@ -9,3 +9,4 @@ pycord
 requests
 pytz
 ics
+google-genai

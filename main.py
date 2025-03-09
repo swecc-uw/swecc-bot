@@ -2,6 +2,7 @@ import aiohttp
 import discord, logging
 from discord.ext import commands
 from dotenv import load_dotenv
+from APIs.GeminiAPI import GeminiAPI
 from APIs.SweccAPI import SweccAPI
 import slash_commands.misc as misc
 import slash_commands.auth as auth
@@ -14,6 +15,7 @@ import admin.filter as filter
 load_dotenv()
 
 swecc = SweccAPI()
+gemini = GeminiAPI()
 bot_context = BotContext()
 intents = discord.Intents.all()
 intents.message_content = True
@@ -46,6 +48,7 @@ async def on_message(message):
     
     await filter.filter_message(message, bot_context)
     await swecc.process_message_event(message)
+    await gemini.process_message_event(message)
         
 @client.event
 async def on_thread_create(thread):
