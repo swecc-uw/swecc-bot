@@ -11,6 +11,8 @@ class GeminiAPI:
 
     def __init__(self, max_context_length=2000):
         self.api_key = os.getenv("GEMINI_API_KEY")
+        self.allowed_channels = [int(os.getenv("OFF_TOPIC_CHANNEL_ID"))]
+        self.allowlisted_roles_id = [int(os.getenv("OFFICER_ROLE_ID"))]
         self.model_name = "gemini-2.0-flash-001"
         self.config = types.GenerateContentConfig(
             system_instruction="""
@@ -71,7 +73,19 @@ class GeminiAPI:
         if message.author.bot or not self.prompt.lower() in message.content.lower():
             return
 
+        
+        user_has_allowlisted_role = any(
+            role.id in self.allowlisted_roles_id for role in message.author.roles
+        )
+
+        if (
+            message.channel.id not in self.allowed_channels
+            and not user_has_allowlisted_role
+        ):
+            return
+          
         prompt = f"Author: {message.author}\nMessage: {message.content}"
+
 
         logging.info(f"Prompt by user {message.author}: {prompt}")
 
