@@ -9,7 +9,7 @@ logging.basicConfig(
 
 class GeminiAPI:
 
-    def __init__(self, max_context_length=1000):
+    def __init__(self, max_context_length=2000):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.model_name = "gemini-2.0-flash-001"
         self.config = types.GenerateContentConfig(
@@ -17,7 +17,7 @@ class GeminiAPI:
             You are a butler for the Software Engineering Career Club at the University of Washington.
             Keep all of your responses below 200 words.
 
-            You will be given context regarding the conversation. Use the context to respond to the prompt appropriately.
+            You will be given context regarding the conversation enclosed in <CONTEXT></CONTEXT> tags. Use the context to support your responses to the prompt.
 
             All of your messages will be formatted as follows:
 
@@ -65,12 +65,7 @@ class GeminiAPI:
         logging.info(f"Context updated: {self.context}")
 
     def add_context(self, message):
-        return (
-            "<CONTEXT>\n"
-            + "\n".join(self.context)
-            + "\n</CONTEXT>"
-            + message
-        )
+        return "<CONTEXT>\n" + "\n".join(self.context) + "\n</CONTEXT>" + message
 
     async def process_message_event(self, message):
         if message.author.bot or not self.prompt.lower() in message.content.lower():
