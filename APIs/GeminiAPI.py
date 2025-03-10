@@ -1,6 +1,7 @@
 import os, logging
 from google import genai
 from google.genai import types
+import re
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
@@ -35,7 +36,8 @@ class GeminiAPI:
             IMPORTANT: only output your response to the message. You do not need to include who the Author is,
             or any "Message:" prefix. You should only output your response to the message.
 
-            You will be given context regarding the conversation; use the context to respond to the prompt appropriately.
+            You will be given context regarding the conversation. Each line in the context is formatted
+            as follows: `Prompt`: Contains the prompt you were given, which includes the author of the prompt and the message they provided; Response`: Contains the response that you generated. Use the context to respond to the user's new prompt appropriately.
             """,
             max_output_tokens=200,
             temperature=0.8,
@@ -69,11 +71,14 @@ class GeminiAPI:
     def add_context(self, message):
         return "<CONTEXT>\n" + "\n".join(self.context) + "\n</CONTEXT>\n" + message
 
+    def format_user_message(self, message):
+        # Replace first instance of prompt with empty string
+        return re.sub(self.prompt.lower(), "", message.content.lower(), 1).strip()
+
     async def process_message_event(self, message):
         if message.author.bot or not self.prompt.lower() in message.content.lower():
             return
 
-        
         user_has_allowlisted_role = any(
             role.id in self.allowlisted_roles_id for role in message.author.roles
         )
@@ -83,9 +88,10 @@ class GeminiAPI:
             and not user_has_allowlisted_role
         ):
             return
-          
-        prompt = f"Author: {message.author}\nMessage: {message.content}"
 
+        prompt = (
+            f"Author: {message.author}\nMessage: {self.format_user_message(message)}"
+        )
 
         logging.info(f"Prompt by user {message.author}: {prompt}")
 
@@ -95,7 +101,7 @@ class GeminiAPI:
 
         response = await self.prompt_model(contextualized_prompt)
 
-        self.update_context(f"Prompt: {prompt}Your Response: {response}")
+        self.update_context(f"Prompt: {prompt}\nResponse: {response}")
 
         logging.info(f"Response: {response}")
         if len(response) > 4000:
