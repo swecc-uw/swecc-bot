@@ -66,7 +66,7 @@ class GeminiAPI:
 
     def add_context(self, message):
         return (
-            "-----CONTEXT----\n"
+            "<CONTEXT>\n"
             + "\n".join(self.context)
             + "\n----END CONTEXT----"
             + message
