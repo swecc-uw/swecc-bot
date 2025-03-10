@@ -17,8 +17,6 @@ class GeminiAPI:
             You are a butler for the Software Engineering Career Club at the University of Washington.
             Keep all of your responses below 200 words.
 
-            You will be given context regarding the conversation enclosed in <CONTEXT></CONTEXT> tags. Use the context to support your responses to the prompt.
-
             All of your messages will be formatted as follows:
 
             Author: [Author]
@@ -34,6 +32,8 @@ class GeminiAPI:
 
             IMPORTANT: only output your response to the message. You do not need to include who the Author is,
             or any "Message:" prefix. You should only output your response to the message.
+
+            You will be given context regarding the conversation; use the context to respond to the prompt appropriately.
             """,
             max_output_tokens=200,
             temperature=0.8,
@@ -65,7 +65,7 @@ class GeminiAPI:
         logging.info(f"Context updated: {self.context}")
 
     def add_context(self, message):
-        return "<CONTEXT>\n" + "\n".join(self.context) + "\n</CONTEXT>" + message
+        return "<CONTEXT>\n" + "\n".join(self.context) + "\n</CONTEXT>\n" + message
 
     async def process_message_event(self, message):
         if message.author.bot or not self.prompt.lower() in message.content.lower():
@@ -83,7 +83,7 @@ class GeminiAPI:
 
         response = await self.prompt_model(contextualized_prompt)
 
-        self.update_context(f"Prompt: {prompt}Gemini's Response: {response}")
+        self.update_context(f"Prompt: {prompt}Your Response: {response}")
 
         logging.info(f"Response: {response}")
         if len(response) > 4000:
