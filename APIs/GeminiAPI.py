@@ -71,9 +71,7 @@ class GeminiAPI:
         if message.author.bot or not self.prompt.lower() in message.content.lower():
             return
 
-        prompt = f"""Author: {message.author}
-        Message: {message.content}
-        """
+        prompt = f"Author: {message.author}\nMessage: {message.content}"
 
         logging.info(f"Prompt by user {message.author}: {prompt}")
 
