@@ -68,7 +68,7 @@ class GeminiAPI:
         return (
             "<CONTEXT>\n"
             + "\n".join(self.context)
-            + "\n----END CONTEXT----"
+            + "\n</CONTEXT>"
             + message
         )
 
