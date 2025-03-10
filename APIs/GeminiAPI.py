@@ -9,7 +9,7 @@ logging.basicConfig(
 
 class GeminiAPI:
 
-    def __init__(self):
+    def __init__(self, max_context_length=1000):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.allowed_channels = [int(os.getenv("OFF_TOPIC_CHANNEL_ID"))]
         self.allowlisted_roles_id = [
@@ -20,6 +20,8 @@ class GeminiAPI:
             system_instruction="""
             You are a butler for the Software Engineering Career Club at the University of Washington.
             Keep all of your responses below 200 words.
+
+            You will be given context regarding the conversation. Use the context to respond to the prompt appropriately.
 
             All of your messages will be formatted as follows:
 
@@ -42,6 +44,9 @@ class GeminiAPI:
         )
         self.prompt = "Gemini"
         self.client = genai.Client(api_key=self.api_key)
+        self.context = []
+        self.context_length = 0
+        self.MAX_CONTEXT_LENGTH = max_context_length
 
     async def prompt_model(self, text):
         try:
@@ -52,6 +57,24 @@ class GeminiAPI:
             return response.text
         except Exception as e:
             logging.error(f"Error in prompt_model: {e}")
+
+    def update_context(self, message):
+        while (
+            len(self.context) > 0
+            and self.context_length + len(message) >= self.MAX_CONTEXT_LENGTH
+        ):
+            self.context_length -= len(self.context.pop(0))
+        self.context.append(message)
+        self.context_length += len(message)
+        logging.info(f"Context updated: {self.context}")
+
+    def add_context(self, message):
+        return (
+            "<CONTEXT>\n"
+            + "\n".join(self.context)
+            + "\n</CONTEXT>"
+            + message
+        )
 
     async def process_message_event(self, message):
         if message.author.bot or not self.prompt.lower() in message.content.lower():
@@ -72,8 +95,17 @@ class GeminiAPI:
         """
 
         logging.info(f"Prompt by user {message.author}: {prompt}")
-        response = await self.prompt_model(prompt)
+
+        contextualized_prompt = self.add_context(prompt)
+
+        logging.info(f"Contextualized prompt: {contextualized_prompt}")
+
+        response = await self.prompt_model(contextualized_prompt)
+
+        self.update_context(f"Prompt: {prompt}Gemini's Response: {response}")
+
         logging.info(f"Response: {response}")
         if len(response) > 4000:
             response = response[:4000] + "..."
+
         await message.channel.send(response)
