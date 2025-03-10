@@ -52,5 +52,7 @@ jobs:
         -e INTERNSHIP_CHANNEL_ID=${{ secrets.INTERNSHIP_CHANNEL_ID }} \
         -e NEW_GRAD_CHANNEL_ID=${{ secrets.NEW_GRAD_CHANNEL_ID }} \
         -e GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }} \
+        -e OFF_TOPIC_CHANNEL_ID=${{ secrets.OFF_TOPIC_CHANNEL_ID }} \
+        -e OFFICER_ROLE_ID=${{ secrets.OFFICER_ROLE_ID }} \
         --restart unless-stopped \
         ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
