@@ -12,9 +12,7 @@ class GeminiAPI:
     def __init__(self, max_context_length=1000):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.allowed_channels = [int(os.getenv("OFF_TOPIC_CHANNEL_ID"))]
-        self.allowlisted_roles_id = [
-            int(os.getenv("OFFICER_ROLE_ID")),
-        ]
+        self.allowlisted_roles_id = [int(os.getenv("OFFICER_ROLE_ID"))]
         self.model_name = "gemini-2.0-flash-001"
         self.config = types.GenerateContentConfig(
             system_instruction="""
@@ -69,12 +67,7 @@ class GeminiAPI:
         logging.info(f"Context updated: {self.context}")
 
     def add_context(self, message):
-        return (
-            "<CONTEXT>\n"
-            + "\n".join(self.context)
-            + "\n</CONTEXT>"
-            + message
-        )
+        return "<CONTEXT>\n" + "\n".join(self.context) + "\n</CONTEXT>" + message
 
     async def process_message_event(self, message):
         if message.author.bot or not self.prompt.lower() in message.content.lower():
