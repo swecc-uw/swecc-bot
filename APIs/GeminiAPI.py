@@ -12,13 +12,17 @@ logging.basicConfig(
 
 
 @dataclass
-class ContextItem:
-    prompt: str
+class Message:
+    author: str
+    message: str
     response: str
     timestamp: datetime
 
+    def format_prompt(self):
+        return f"Author: {self.author}\nMessage: {self.message}"
+
     def __str__(self):
-        return f"Prompt: {self.prompt}\nResponse: {self.response}"
+        return f"Prompt: {self.format_prompt()}\nResponse: {self.response}"
 
     def __len__(self):
         return len(str(self))
@@ -75,7 +79,7 @@ class GeminiAPI:
         )
         self.prompt = "Gemini"
         self.client = genai.Client(api_key=self.api_key)
-        self.context: deque[ContextItem] = deque()
+        self.context: deque[Message] = deque()
         self.context_length = 0
         self.MAX_CONTEXT_LENGTH = max_context_length
         self.context_invalidation_time_seconds = context_invalidation_time_seconds
@@ -138,23 +142,23 @@ class GeminiAPI:
         ):
             return
 
-        prompt = (
-            f"Author: {message.author}\nMessage: {self.format_user_message(message)}"
+        message_info = Message(
+            str(message.author), self.format_user_message(message), "", datetime.now()
         )
 
-        logging.info(f"Prompt by user {message.author}: {prompt}")
+        logging.info(f"Received prompt: {message_info.format_prompt()}")
 
         self.ensure_relevant_context()
-        contextualized_prompt = self.add_context(prompt)
+        contextualized_prompt = self.add_context(message_info.format_prompt())
 
         logging.info(f"Contextualized prompt: {contextualized_prompt}")
 
-        response = await self.prompt_model(contextualized_prompt)
+        message_info.response = await self.prompt_model(contextualized_prompt)
+        self.update_context(message_info)
 
-        self.update_context(ContextItem(prompt, response, datetime.now()))
+        logging.info(f"Response: {message_info.response}")
 
-        logging.info(f"Response: {response}")
-        if len(response) > 4000:
+        response = message_info.response
+        if response and len(response) > 4000:
             response = response[:4000] + "..."
-
         await message.channel.send(response)
