@@ -154,6 +154,11 @@ class GeminiAPI:
         logging.info(f"Contextualized prompt: {contextualized_prompt}")
 
         message_info.response = await self.prompt_model(contextualized_prompt)
+
+        if '@' in message_info.response:
+            await message.channel.send("NO")
+            return
+        
         self.update_context(message_info)
 
         logging.info(f"Response: {message_info.response}")
