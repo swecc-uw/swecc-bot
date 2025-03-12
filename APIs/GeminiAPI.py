@@ -102,16 +102,6 @@ class GeminiAPI:
             self.context_length = 0
 
     def update_context(self, context_item):
-
-        if (
-            len(self.context) > 0
-            and (datetime.now() - self.context[-1].timestamp).total_seconds()
-            > self.context_invalidation_time_seconds
-        ):
-            logging.info("Clearing context...")
-            self.context.clear()
-            self.context_length = 0
-
         while (
             len(self.context) > 0
             and self.context_length + len(context_item) >= self.MAX_CONTEXT_LENGTH
