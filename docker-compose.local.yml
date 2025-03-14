@@ -27,6 +27,7 @@ services:
       - OFF_TOPIC_CHANNEL_ID=${OFF_TOPIC_CHANNEL_ID}
       - OFFICER_ROLE_ID=${OFFICER_ROLE_ID}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - VERFIED_ROLE_ID=${VERFIED_ROLE_ID}
 
 networks:
   swecc-default:

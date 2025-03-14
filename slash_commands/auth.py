@@ -1,7 +1,10 @@
 import discord
+import os
 from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
+
+VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
 
 
 class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
@@ -21,6 +24,7 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
         username = interaction.user.name
         user_id = interaction.user.id
         auth_code = self.code.value
+
         response = swecc.auth(username, user_id, auth_code)
         if response == 200:
             await interaction.response.send_message(
@@ -30,9 +34,18 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
                 interaction,
                 f"{interaction.user.display_name} has verified their account.",
             )
+
+            if (role := interaction.guild.get_role(VERIFIED_ROLE_ID)) is None:
+                await self.bot_context.log(
+                    interaction,
+                    f"ERROR: Role {VERIFIED_ROLE_ID} not found for {interaction.user.display_name}",
+                )
+                return
+
+            await interaction.user.add_roles(role)
             return
         await interaction.response.send_message(
-            f"Authentication failed. Please try again. Verify the discord username on the website is **{username}**.",
+            f"Authentication failed. Please try again. Verify you signed up with the correct username **({username})**.",
             ephemeral=True,
         )
         await self.bot_context.log(
@@ -60,16 +73,22 @@ async def auth(ctx: discord.Interaction):
 
 
 async def reset_password(ctx: discord.Interaction):
-    url = await swecc.reset_password(ctx.user.name, ctx.user.id)
-    embed = discord.Embed(
-        title="Reset Password",
-        description=f"[Click here to reset your password]({url})",
-        color=discord.Color.blue(),
-    )
-    await bot_context.log(
-        ctx, f"{ctx.user.display_name} has requested to reset their password."
-    )
-    await ctx.response.send_message(embed=embed, ephemeral=True)
+    try:
+        url = await swecc.reset_password(ctx.user.name, ctx.user.id)
+        embed = discord.Embed(
+            title="Reset Password",
+            description=f"[Click here to reset your password]({url})",
+            color=discord.Color.blue(),
+        )
+        await bot_context.log(
+            ctx, f"{ctx.user.display_name} has requested to reset their password."
+        )
+        await ctx.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        await ctx.response.send_message("Something went wrong", ephemeral=True)
+        await bot_context.log(
+            ctx, f"ERROR: Password reset failed for {ctx.user.display_name}: {e}"
+        )
 
 
 def setup(client, context):
