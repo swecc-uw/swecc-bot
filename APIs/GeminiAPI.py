@@ -159,7 +159,7 @@ class GeminiAPI:
             self.format_user_message(message),
             "",
             datetime.now(),
-            is_authorized=not self.is_authorized(message),
+            is_authorized=self.is_authorized(message),
         )
 
         logging.info(f"Received prompt: {message_info.format_prompt()}")
