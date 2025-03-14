@@ -45,7 +45,7 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
             await interaction.user.add_roles(role)
             return
         await interaction.response.send_message(
-            f"Authentication failed. Please try again. Verify you signed up with the correct username **({username})**.",
+            f"Authentication failed. Please try again. Verify you signed up with the correct username: **{username}**.",
             ephemeral=True,
         )
         await self.bot_context.log(
