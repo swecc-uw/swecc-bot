@@ -4,12 +4,12 @@ from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
 
-VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
-
-
 class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
     def __init__(self, bot_context):
         super().__init__(timeout=None)
+
+        self.VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
+
         self.bot_context = bot_context
 
         self.code = discord.ui.TextInput(
@@ -35,10 +35,10 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
                 f"{interaction.user.display_name} has verified their account.",
             )
 
-            if (role := interaction.guild.get_role(VERIFIED_ROLE_ID)) is None:
+            if (role := interaction.guild.get_role(self.VERIFIED_ROLE_ID)) is None:
                 await self.bot_context.log(
                     interaction,
-                    f"ERROR: Role {VERIFIED_ROLE_ID} not found for {interaction.user.display_name}",
+                    f"ERROR: Role {self.VERIFIED_ROLE_ID} not found for {interaction.user.display_name}",
                 )
                 return
 
