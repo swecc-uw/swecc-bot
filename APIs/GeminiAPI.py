@@ -145,7 +145,7 @@ class GeminiAPI:
             message=self.format_user_message(message),
             response="",  # Set response to be empty initially, fill out when received from Gemini
             timestamp=datetime.now(),
-            is_authorized=not self.is_authorized(message),
+            is_authorized=self.is_authorized(message),
         )
 
         logging.info(f"Received prompt: {message_info.format_prompt()}")
