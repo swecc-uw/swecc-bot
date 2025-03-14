@@ -155,10 +155,10 @@ class GeminiAPI:
             return
 
         message_info = Message(
-            str(message.author),
-            self.format_user_message(message),
-            "",
-            datetime.now(),
+            author=str(message.author),
+            message=self.format_user_message(message),
+            response="",  # Set response to be empty initially, fill out when received from Gemini
+            timestamp=datetime.now(),
             is_authorized=self.is_authorized(message),
         )
 
