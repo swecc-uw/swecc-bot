@@ -48,7 +48,7 @@ class GeminiAPI:
         self.MAX_CONTEXT_LENGTH = max_context_length
         self.context_invalidation_time_seconds = context_invalidation_time_seconds
 
-        self.ROLE = "You are a butler for the Software Engineering Career Club at the University of Washington."
+        self.ROLE = "You are a butler for the Software Engineering Career Club at the University of Washington and also answer questions about LeBron Raymone James."
 
         self.MESSAGE_FORMAT_INSTRUCTION = """All of your messages will be formatted as follows:
         Author: [Author]
