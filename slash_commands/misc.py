@@ -133,7 +133,7 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
     ]
 )
 async def github_leaderboard(ctx: discord.Interaction, order: str = "commits"):
-    leaderboard_data = swecc_api.github_leaderboard(order_by=order)[:10]
+    leaderboard_data = swecc_api.github_leaderboard(order_by=order)
 
     embed = discord.Embed(
         title="🏆 Github Leaderboard",
