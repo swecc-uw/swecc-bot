@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+    # allow manual triggering and from API
 jobs:
   build:
     runs-on:
