@@ -32,15 +32,15 @@ jobs:
     - name: Deploy bot service
       run: |
         # Remove the existing service if it exists
-        docker service rm swecc-stack-bot || true
+        docker service rm bot || true
 
         # Extract environment variables from config
         docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt
 
         # Deploy the service with the env file
         docker service create \
-          --name swecc-stack-bot \
-          --network swecc-stack-swecc-network \
+          --name bot \
+          --network prod_swecc-network \
           --env-file env_file.txt \
           --replicas 1 \
           --restart-condition any \
