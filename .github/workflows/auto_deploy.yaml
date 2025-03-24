@@ -58,8 +58,8 @@ jobs:
               --update-delay 30s \
               --update-order start-first \
               --update-failure-action continue \
-              --limit-cpu 0.5 \
-              --limit-memory 512M \
+              --limit-cpu 0.3 \
+              --limit-memory 256M \
               --reserve-cpu 0.1 \
               --reserve-memory 128M \
               --with-registry-auth \
@@ -79,8 +79,8 @@ jobs:
               --update-delay 30s \
               --update-order start-first \
               --update-failure-action continue \
-              --limit-cpu 0.5 \
-              --limit-memory 512M \
+              --limit-cpu 0.3 \
+              --limit-memory 256M \
               --reserve-cpu 0.1 \
               --reserve-memory 128M \
               --with-registry-auth \
