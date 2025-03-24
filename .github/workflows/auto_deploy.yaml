@@ -102,8 +102,8 @@ jobs:
         elapsed=0
 
         # Give Docker more time to start pulling
-        echo "Waiting 60 seconds before starting verification..."
-        sleep 60
+        echo "Waiting 3 seconds before starting verification..."
+        sleep 3
 
         while [ $elapsed -lt $timeout ]; do
           REPLICAS=$(docker service ls --filter "name=bot" --format "{{.Replicas}}")
