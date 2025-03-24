@@ -202,13 +202,14 @@ class SweccAPI:
         except Exception as e:
             logging.error("Failed to sync channels: %s", e)
 
-    async def update_cohort_stats(self, discord_id, cohort_name, stat_url):
+    async def update_cohort_stats(self, discord_id, stat_url, cohort_name=None):
         session = self.get_session()
 
-        data = {"discord_id": discord_id, "cohort_name": cohort_name}
+        data = {"discord_id": discord_id}
+        if cohort_name is not None:
+            data["cohort_name"] = cohort_name
 
         try:
-
             async with session.put(
                 f"{self.url}/engagement/cohort/{stat_url}",
                 headers=self.headers,
@@ -228,11 +229,10 @@ class SweccAPI:
                         response_json,
                     )
 
-                return response_json["cohort_stats"], None
+                return response_json["updated_cohorts"], None
         except Exception as e:
             logging.error("Failed to update cohort stats: %s", e)
             return {}, {"message": "Failed to update cohort stats"}
-
 
     async def get_cohort_stats(self, discord_id=None):
         session = self.get_session()

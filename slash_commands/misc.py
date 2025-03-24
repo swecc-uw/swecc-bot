@@ -7,6 +7,7 @@ from APIs.SweccAPI import SweccAPI
 import os
 from dotenv import load_dotenv
 from .utils import handle_cohort_stat_update
+from typing import Optional
 
 useless = UselessAPIs()
 calendar = CalendarAPI()
@@ -276,9 +277,10 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
         await ctx.followup.send(embed=error_embed, ephemeral=True)
 
 
-async def daily_check(ctx: discord.Interaction, cohort_name: str):
+@app_commands.describe(cohort_name="The cohort name (optional)")
+async def daily_check(ctx: discord.Interaction, cohort_name: Optional[str] = None):
     data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, "dailycheck"
+        ctx.user.id, "dailycheck", cohort_name
     )
 
     await handle_cohort_stat_update(
@@ -291,23 +293,27 @@ async def daily_check(ctx: discord.Interaction, cohort_name: str):
     )
 
 
-async def online_assessment(ctx: discord.Interaction, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "oa")
-
+@app_commands.describe(cohort_name="The cohort name (optional)")
+async def online_assessment(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "oa", cohort_name)
+    updated_cohorts = ", ".join(data)
     await handle_cohort_stat_update(
         ctx,
         data,
         error,
         bot_context,
         title="Online Assessment",
-        description="Your online assessment was successfully recorded!",
+        description=f"Your online assessment was successfully recorded in {updated_cohorts}!",
     )
 
 
-async def interview(ctx: discord.Interaction, cohort_name: str):
+@app_commands.describe(cohort_name="The cohort name (optional)")
+async def interview(ctx: discord.Interaction, cohort_name: Optional[str] = None):
     data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, cohort_name, "interview"
+        ctx.user.id, "interview", cohort_name
     )
+
+    updated_cohorts = ", ".join(data)
 
     await handle_cohort_stat_update(
         ctx,
@@ -315,12 +321,15 @@ async def interview(ctx: discord.Interaction, cohort_name: str):
         error,
         bot_context,
         "Interview",
-        "Your interview was successfully recorded!",
+        f"Your interview was successfully recorded in {updated_cohorts}!",
     )
 
 
-async def offer(ctx: discord.Interaction, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "offer")
+@app_commands.describe(cohort_name="The cohort name (optional)")
+async def offer(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "offer", cohort_name)
+
+    updated_cohorts = ", ".join(data)
 
     await handle_cohort_stat_update(
         ctx,
@@ -328,12 +337,15 @@ async def offer(ctx: discord.Interaction, cohort_name: str):
         error,
         bot_context,
         "Offer",
-        "Your offer was successfully recorded! (congrats! 🎉)",
+        f"Your offer was successfully recorded in {updated_cohorts}! Congratulations on the offer! 🎉",
     )
 
 
-async def apply(ctx: discord.Interaction, cohort_name: str):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, cohort_name, "apply")
+@app_commands.describe(cohort_name="The cohort name (optional)")
+async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "apply", cohort_name)
+
+    updated_cohorts = ", ".join(data)
 
     await handle_cohort_stat_update(
         ctx,
@@ -341,13 +353,13 @@ async def apply(ctx: discord.Interaction, cohort_name: str):
         error,
         bot_context,
         "Application",
-        "Your application was successfully recorded!",
+        f"Your application was successfully recorded in {updated_cohorts}!",
     )
-
 
 def setup(client, context):
     global bot_context
     bot_context = context
+
     client.tree.command(name="say_hi")(say_hi)
     client.tree.command(name="xyz")(google_xyz)
     client.tree.command(name="resume_guide")(full_resume_guide)
