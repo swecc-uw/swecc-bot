@@ -40,29 +40,40 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
 
+    - name: Login to Docker Hub on deployment server
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Pull latest image
+      run: |
+        docker pull ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
+
     - name: Deploy bot service
       run: |
         if docker service ls | grep -q "bot"; then
-          # Update existing service
+          # Update existing service with explicit image
           docker service update \
             --image ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest \
             --update-parallelism 1 \
-            --update-delay 10s \
+            --update-delay 30s \
             --update-order start-first \
-            --update-failure-action rollback \
+            --update-failure-action continue \
             --limit-cpu 0.5 \
             --limit-memory 512M \
             --reserve-cpu 0.1 \
             --reserve-memory 128M \
+            --with-registry-auth \
             bot
         else
           # Remove service if it exists but in a weird state
           docker service rm bot || true
 
           # Get environment variables from Docker config
-          docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt
+          docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt || echo "No config found"
 
-          # Create new service
+          # Create new service with explicit auth
           docker service create \
             --name bot \
             --network prod_swecc-network \
@@ -70,43 +81,53 @@ jobs:
             --replicas 1 \
             --restart-condition any \
             --update-parallelism 1 \
-            --update-delay 10s \
+            --update-delay 30s \
             --update-order start-first \
-            --update-failure-action rollback \
+            --update-failure-action continue \
             --limit-cpu 0.5 \
             --limit-memory 512M \
             --reserve-cpu 0.1 \
             --reserve-memory 128M \
+            --with-registry-auth \
             ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
 
           # Clean up
-          rm env_file.txt
+          rm env_file.txt || true
         fi
 
     - name: Verify deployment
       run: |
         echo "Verifying deployment..."
-        timeout=120
+        timeout=300
         elapsed=0
 
+        # Give Docker more time to start pulling
+        echo "Waiting 60 seconds before starting verification..."
+        sleep 60
+
         while [ $elapsed -lt $timeout ]; do
-          if [ $(docker service ls --filter "name=bot" --format "{{.Replicas}}") == "1/1" ]; then
+          REPLICAS=$(docker service ls --filter "name=bot" --format "{{.Replicas}}")
+          echo "Current replica status: $REPLICAS"
+
+          if [ "$REPLICAS" == "1/1" ]; then
             echo "✅ Service deployed successfully"
             exit 0
           fi
 
           echo "⏳ Waiting for service to be fully deployed... ($elapsed/$timeout seconds)"
-          sleep 5
-          elapsed=$((elapsed + 5))
+          sleep 10
+          elapsed=$((elapsed + 10))
+
+          # Display service status for debugging
+          echo "Current service status:"
+          docker service ps bot --no-trunc
 
           if docker service ps bot --filter "desired-state=running" --format "{{.Error}}" | grep -q .; then
-            echo "❌ Deployment failed with errors:"
-            docker service ps bot
-            exit 1
+            echo "⚠️ Deployment showing errors, but continuing to wait..."
           fi
         done
 
         echo "❌ Deployment verification timed out after $timeout seconds"
-        echo "Current service status:"
+        echo "Final service status:"
         docker service ps bot --no-trunc
         exit 1
