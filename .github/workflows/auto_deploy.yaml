@@ -5,11 +5,11 @@ on:
       - main
   workflow_dispatch:
     # allow manual triggering and from API
+
 jobs:
-  build:
-    runs-on:
-      group: EC2
-      labels: [self-hosted, deploy]
+  push_to_dockerhub:
+    runs-on: ubuntu-latest
+
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v2
@@ -29,22 +29,84 @@ jobs:
           ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
           ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:${{ github.sha }}
 
+  deploy_to_swarm:
+    runs-on:
+      group: EC2
+      labels: [self-hosted, deploy]
+
+    needs: push_to_dockerhub
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
     - name: Deploy bot service
       run: |
-        # Remove the existing service if it exists
-        docker service rm bot || true
+        if docker service ls | grep -q "bot"; then
+          # Update existing service
+          docker service update \
+            --image ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest \
+            --update-parallelism 1 \
+            --update-delay 10s \
+            --update-order start-first \
+            --update-failure-action rollback \
+            --limit-cpu 0.5 \
+            --limit-memory 512M \
+            --reserve-cpu 0.1 \
+            --reserve-memory 128M \
+            bot
+        else
+          # Remove service if it exists but in a weird state
+          docker service rm bot || true
 
-        # Extract environment variables from config
-        docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt
+          # Get environment variables from Docker config
+          docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt
 
-        # Deploy the service with the env file
-        docker service create \
-          --name bot \
-          --network prod_swecc-network \
-          --env-file env_file.txt \
-          --replicas 1 \
-          --restart-condition any \
-          ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
+          # Create new service
+          docker service create \
+            --name bot \
+            --network prod_swecc-network \
+            --env-file env_file.txt \
+            --replicas 1 \
+            --restart-condition any \
+            --update-parallelism 1 \
+            --update-delay 10s \
+            --update-order start-first \
+            --update-failure-action rollback \
+            --limit-cpu 0.5 \
+            --limit-memory 512M \
+            --reserve-cpu 0.1 \
+            --reserve-memory 128M \
+            ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
 
-        # Clean up
-        rm env_file.txt
+          # Clean up
+          rm env_file.txt
+        fi
+
+    - name: Verify deployment
+      run: |
+        echo "Verifying deployment..."
+        timeout=120
+        elapsed=0
+
+        while [ $elapsed -lt $timeout ]; do
+          if [ $(docker service ls --filter "name=bot" --format "{{.Replicas}}") == "1/1" ]; then
+            echo "✅ Service deployed successfully"
+            exit 0
+          fi
+
+          echo "⏳ Waiting for service to be fully deployed... ($elapsed/$timeout seconds)"
+          sleep 5
+          elapsed=$((elapsed + 5))
+
+          if docker service ps bot --filter "desired-state=running" --format "{{.Error}}" | grep -q .; then
+            echo "❌ Deployment failed with errors:"
+            docker service ps bot
+            exit 1
+          fi
+        done
+
+        echo "❌ Deployment verification timed out after $timeout seconds"
+        echo "Current service status:"
+        docker service ps bot --no-trunc
+        exit 1
