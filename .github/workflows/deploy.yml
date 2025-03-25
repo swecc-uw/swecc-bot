@@ -5,6 +5,17 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  SERVICE_NAME: "bot"
+  NETWORK: "prod_swecc-network"
+  CPU_LIMIT: "0.3"
+  MEMORY_LIMIT: "256M"
+  CPU_RESERVE: "0.1"
+  MEMORY_RESERVE: "128M"
+  IMAGE: "swecc-bot"
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  CONFIG_NAME: "bot_env"
+
 jobs:
   push_to_dockerhub:
     runs-on: ubuntu-latest
@@ -25,8 +36,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:${{ github.sha }}
 
   deploy_to_swarm:
     runs-on:
@@ -47,79 +58,75 @@ jobs:
 
       - name: Pull latest image
         run: |
-          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
+          docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:latest
 
-      - name: Deploy bot service
+      - name: Prepare environment file
         run: |
-          if docker service ls | grep -q "bot"; then
-                      docker service update \
-              --image ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest \
-              --update-parallelism 1 \
-              --update-delay 30s \
-              --update-order start-first \
-              --update-failure-action continue \
-              --limit-cpu 0.3 \
-              --limit-memory 256M \
-              --reserve-cpu 0.1 \
-              --reserve-memory 128M \
-              --with-registry-auth \
-              bot
+          echo "Parsing environment variables..."
+          docker config inspect ${{ env.CONFIG_NAME }} --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt || echo "No config found"
+
+      - name: Check for existing service
+        id: check_service
+        run: |
+          if docker service ls | grep -q "${{ env.SERVICE_NAME }}"; then
+            echo "existing_service=true" >> $GITHUB_OUTPUT
           else
-                      docker service rm bot || true
-
-                      docker config inspect bot_env --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt || echo "No config found"
-
-                      docker service create \
-              --name bot \
-              --network prod_swecc-network \
-              --env-file env_file.txt \
-              --replicas 1 \
-              --restart-condition any \
-              --update-parallelism 1 \
-              --update-delay 30s \
-              --update-order start-first \
-              --update-failure-action continue \
-              --limit-cpu 0.3 \
-              --limit-memory 256M \
-              --reserve-cpu 0.1 \
-              --reserve-memory 128M \
-              --with-registry-auth \
-              ${{ secrets.DOCKERHUB_USERNAME }}/swecc-bot:latest
-
-                      rm env_file.txt || true
+            echo "existing_service=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Verify deployment
+      - name: Create staging service for zero-downtime deployment
+        id: create_staging
+        if: steps.check_service.outputs.existing_service == 'true'
         run: |
-          echo "Verifying deployment..."
-          timeout=300
-          elapsed=0
+          STAGING_NAME="${{ env.SERVICE_NAME }}-staging"
 
-                  echo "Waiting 3 seconds before starting verification..."
-          sleep 3
+          echo "Creating temporary service: $STAGING_NAME"
+          docker service create \
+            --name "$STAGING_NAME" \
+            --network ${{ env.NETWORK }} \
+            --env-file env_file.txt \
+            --replicas 1 \
+            --restart-condition any \
+            --limit-cpu ${{ env.CPU_LIMIT }} \
+            --limit-memory ${{ env.MEMORY_LIMIT }} \
+            --reserve-cpu ${{ env.CPU_RESERVE }} \
+            --reserve-memory ${{ env.MEMORY_RESERVE }} \
+            --with-registry-auth \
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:latest
 
-          while [ $elapsed -lt $timeout ]; do
-            REPLICAS=$(docker service ls --filter "name=bot" --format "{{.Replicas}}")
-            echo "Current replica status: $REPLICAS"
+          echo "New service is healthy - promoting staging service to production"
+          docker service update \
+            --update-parallelism 1 \
+            --hostname ${{ env.SERVICE_NAME }} \
+            $STAGING_NAME
 
-            if [ "$REPLICAS" == "1/1" ]; then
-              echo "✅ Service deployed successfully"
-              exit 0
-            fi
+          echo "Removing old service"
+          docker service rm ${{ env.SERVICE_NAME }}
 
-            echo "⏳ Waiting for service to be fully deployed... ($elapsed/$timeout seconds)"
-            sleep 10
-            elapsed=$((elapsed + 10))
+          echo "staging_success=true" >> $GITHUB_OUTPUT
 
-                      echo "Current service status:"
-            docker service ps bot --no-trunc
+      - name: Create new service
+        if: steps.check_service.outputs.existing_service == 'false' || steps.create_staging.outputs.staging_success == 'true'
+        run: |
+          echo "Creating new prod service for ${{ env.SERVICE_NAME }}"
+          docker service create \
+            --name ${{ env.SERVICE_NAME }} \
+            --network ${{ env.NETWORK }} \
+            --env-file env_file.txt \
+            --replicas 1 \
+            --restart-condition any \
+            --update-parallelism 1 \
+            --update-delay 30s \
+            --update-order start-first \
+            --update-failure-action continue \
+            --limit-cpu ${{ env.CPU_LIMIT }} \
+            --limit-memory ${{ env.MEMORY_LIMIT }} \
+            --reserve-cpu ${{ env.CPU_RESERVE }} \
+            --reserve-memory ${{ env.MEMORY_RESERVE }} \
+            --with-registry-auth \
+            ${{ env.DOCKERHUB_USERNAME }}/${{ env.IMAGE }}:latest
 
-            if docker service ps bot --filter "desired-state=running" --format "{{.Error}}" | grep -q .; then
-              echo "⚠️ Deployment showing errors, but continuing to wait..."
-            fi
-          done
-
-          echo "❌ Deployment verification timed out after $timeout seconds"
-          echo "Final service status:"
-          docker service ps bot --no-trunc
-          exit 1
+      - name: Cleanup
+        run: |
+          docker service rm ${{ env.SERVICE_NAME }}-staging || true
+          rm env_file.txt || true
