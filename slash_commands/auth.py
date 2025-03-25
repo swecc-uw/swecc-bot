@@ -7,10 +7,10 @@ swecc = SweccAPI()
 VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
 
 class RegisterModal(discord.ui.Modal, title="Register Your Account"):
-    def __init__(self, bot_context):
+    def __init__(self, bot_context, verified_role):
         super().__init__(timeout=None)
         self.bot_context = bot_context
-        self.VERIFIED_ROLE_ID = VERIFIED_ROLE_ID
+        self.verified_role = verified_role
         self.OFF_TOPIC_CHANNEL_ID = int(os.getenv("OFF_TOPIC_CHANNEL_ID"))
 
         self.username = discord.ui.TextInput(
@@ -75,39 +75,25 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             )
 
             if auth_response == 200:
-                await interaction.response.send_message(
-                    f"{detail}. Your account has been verified, and you can now reset your password [here]({reset_password_url}).",
-                    ephemeral=True
-                )
+                usr_msg = f"{detail} Your account has been verified, and you can now reset your password [here]({reset_password_url})."
+                sys_msg = f"{interaction.user.display_name} has registered and verified their account with username {username} and id {id}."
 
-                await self.bot_context.log(
-                    interaction,
-                    f"{interaction.user.display_name} has registered and verified their account with username {username} and id {id}."
-                )
+                await interaction.response.send_message(usr_msg, ephemeral=True)
+                await self.bot_context.log(interaction, sys_msg)
+                await interaction.user.add_roles(self.verified_role)
 
-                if role := interaction.guild.get_role(self.VERIFIED_ROLE_ID):
-                    await interaction.user.add_roles(role)
+            else:
+                usr_msg = f"Registration successful, but automatic verification failed. Please use /verify to link your account. Error: {auth_response}"
+                sys_msg = f"{interaction.user.display_name} registered an account but automatic verification failed. - {auth_response}."
 
-                return
+                await interaction.response.send_message(usr_msg, ephemeral=True)
+                await self.bot_context.log(interaction, sys_msg)
+        else:
+            usr_msg = f"Registration failed. Please try again. Error: {status}"
+            sys_msg = f"{interaction.user.display_name} has failed to register an account with status {status}. - {response}."
 
-            await interaction.response.send_message(
-                f"Registration successful, but automatic verification failed. Please use /verify to link your account. Error: {auth_response}",
-                ephemeral=True
-            )
-            await self.bot_context.log(
-                interaction,
-                f"{interaction.user.display_name} registered an account but automatic verification failed. - {auth_response}."
-            )
-            return
-
-        await interaction.response.send_message(
-            f"Registration failed. Please try again. Error: {status}",
-            ephemeral=True
-        )
-        await self.bot_context.log(
-            interaction,
-            f"{interaction.user.display_name} has failed to register an account with status {status}. - {response}."
-        )
+            await interaction.response.send_message(usr_msg, ephemeral=True)
+            await self.bot_context.log(interaction, sys_msg)
 
     async def on_error(self, interaction: discord.Interaction, error: Exception):
         if not interaction.response.is_done():
@@ -122,17 +108,25 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
 
 async def register(ctx: discord.Interaction):
 
-    if role := ctx.guild.get_role(VERIFIED_ROLE_ID):
+    if (role := ctx.guild.get_role(VERIFIED_ROLE_ID)) and role in ctx.user.roles:
+        usr_msg = f"You are already verified"
+        sys_msg = f"{ctx.user.display_name} has tried to register but is already verified."
 
-        if role in ctx.user.roles:
-            await ctx.response.send_message(f"You are already verified", ephemeral=True)
-            return
+        await ctx.response.send_message(usr_msg, ephemeral=True)
+        await bot_context.log(ctx, sys_msg)
+    elif role is None:
+        usr_msg = f"Something went wrong. Please contact an admin."
+        sys_msg = f"ERROR: Role {VERIFIED_ROLE_ID} not found, skipping registration for {ctx.user.display_name}"
 
-    await ctx.response.send_modal(
-        RegisterModal(
-            bot_context,
+        await ctx.response.send_message(usr_msg, ephemeral=True)
+        await bot_context.log(ctx, sys_msg)
+    else:
+        await ctx.response.send_modal(
+            RegisterModal(
+                bot_context,
+                role
+            )
         )
-    )
 
 class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
     def __init__(self, bot_context):
