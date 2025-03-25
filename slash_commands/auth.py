@@ -77,7 +77,7 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
 
             if auth_response == 200:
                 await interaction.response.send_message(
-                    "Registration successful! Your account has been verified. ",
+                    "Registration successful! Your account has been verified.",
                     ephemeral=True
                 )
 
