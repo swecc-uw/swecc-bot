@@ -1,16 +1,16 @@
 import discord
 import os
+import secrets
 from APIs.SweccAPI import SweccAPI
-from APIs.GeminiAPI import GeminiAPI
 
 swecc = SweccAPI()
-gemini = GeminiAPI()
+VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
 
 class RegisterModal(discord.ui.Modal, title="Register Your Account"):
     def __init__(self, bot_context):
         super().__init__(timeout=None)
         self.bot_context = bot_context
-        self.VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
+        self.VERIFIED_ROLE_ID = VERIFIED_ROLE_ID
         self.OFF_TOPIC_CHANNEL_ID = int(os.getenv("OFF_TOPIC_CHANNEL_ID"))
 
         self.username = discord.ui.TextInput(
@@ -41,27 +41,20 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             required=True,
         )
 
-        self.password = discord.ui.TextInput(
-            label="Password (remember this!)",
-            style=discord.TextStyle.short,
-            placeholder="Enter your password",
-            required=True,
-        )
-
         self.add_item(self.username)
         self.add_item(self.first_name)
         self.add_item(self.last_name)
         self.add_item(self.email)
-        self.add_item(self.password)
 
     async def on_submit(self, interaction: discord.Interaction):
         username = self.username.value
         first_name = self.first_name.value
         last_name = self.last_name.value
         email = self.email.value
-        password = self.password.value
         discord_username = interaction.user.name
         user_id = interaction.user.id
+
+        password = secrets.token_urlsafe(32)
 
         response = swecc.register(
             username,
@@ -77,7 +70,7 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
 
             if auth_response == 200:
                 await interaction.response.send_message(
-                    "Registration successful! Your account has been verified.",
+                    f"Registration successful! Your account has been verified, and your temporary password is: `{password}`. You can reset it by running /reset_password.",
                     ephemeral=True
                 )
 
@@ -122,6 +115,13 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             )
 
 async def register(ctx: discord.Interaction):
+
+    if role := ctx.guild.get_role(VERIFIED_ROLE_ID):
+
+        if role in ctx.user.roles:
+            await ctx.response.send_message(f"You are already verified", ephemeral=True)
+            return
+
     await ctx.response.send_modal(
         RegisterModal(
             bot_context,

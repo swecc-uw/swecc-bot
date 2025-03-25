@@ -37,7 +37,8 @@ class GeminiAPI:
         context_invalidation_time_seconds=10 * 60,  # 10 minutes
     ):
         self.api_key = os.getenv("GEMINI_API_KEY")
-        self.allowed_channels = [int(os.getenv("OFF_TOPIC_CHANNEL_ID"))]
+        self.OFF_TOPIC_CHANNEL_ID = int(os.getenv("OFF_TOPIC_CHANNEL_ID"))
+        self.allowed_channels = [self.OFF_TOPIC_CHANNEL_ID]
         self.allowlisted_roles_id = [int(os.getenv("OFFICER_ROLE_ID"))]
         self.model_name = "gemini-2.0-flash-001"
 
@@ -194,7 +195,7 @@ class GeminiAPI:
         logging.info(f"Response: {message_info.response}")
         await message.channel.send(cleaned_response)
 
-    async def get_welcome_message(self, username):
+    async def get_welcome_message(self, username, discord_id):
         response = await self.prompt_model_unnerfed(
             f"""
             {self.ROLE}
@@ -202,10 +203,10 @@ class GeminiAPI:
             You should write a fun and unique welcome message for {username}.
             They just joined the club and are excited to meet everyone!
 
-            You can ping them using @{username} to get their attention.
+            You can ping them using <@{discord_id}> to get their attention.
 
             At the end of your message, be sure to tell them that they can
-            always reach you in "#off-topic" if they have any questions or
+            always reach you in <#{self.OFF_TOPIC_CHANNEL_ID}> if they have any questions or
             need help with anything.
             """
         )
