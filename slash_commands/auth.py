@@ -11,7 +11,6 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
         super().__init__(timeout=None)
         self.bot_context = bot_context
         self.verified_role = verified_role
-        self.OFF_TOPIC_CHANNEL_ID = int(os.getenv("OFF_TOPIC_CHANNEL_ID"))
 
         self.username = discord.ui.TextInput(
             label="Username",
