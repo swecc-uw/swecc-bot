@@ -56,7 +56,7 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
 
         password = secrets.token_urlsafe(32)
 
-        response = swecc.register(
+        status, response = swecc.register(
             username,
             first_name,
             last_name,
@@ -65,18 +65,24 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             discord_username
         )
 
-        if response == 201:
+        if status == 201:
             auth_response = swecc.auth(discord_username, user_id, username)
+
+            (id, reset_password_url, detail) = (
+                response["id"],
+                response["reset_password_url"],
+                response["detail"]
+            )
 
             if auth_response == 200:
                 await interaction.response.send_message(
-                    f"Registration successful! Your account has been verified, and your temporary password is: `{password}`. You can reset it by running /reset_password.",
+                    f"{detail}. Your account has been verified, and you can now reset your password [here]({reset_password_url}).",
                     ephemeral=True
                 )
 
                 await self.bot_context.log(
                     interaction,
-                    f"{interaction.user.display_name} has registered and verified their account with username {username}."
+                    f"{interaction.user.display_name} has registered and verified their account with username {username} and id {id}."
                 )
 
                 if role := interaction.guild.get_role(self.VERIFIED_ROLE_ID):
@@ -95,12 +101,12 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             return
 
         await interaction.response.send_message(
-            f"Registration failed. Please try again. Error: {response}",
+            f"Registration failed. Please try again. Error: {status}",
             ephemeral=True
         )
         await self.bot_context.log(
             interaction,
-            f"{interaction.user.display_name} has failed to register an account. - {response}."
+            f"{interaction.user.display_name} has failed to register an account with status {status}. - {response}."
         )
 
     async def on_error(self, interaction: discord.Interaction, error: Exception):

@@ -36,51 +36,24 @@ class SweccAPI:
             raise Exception("aiohttp session not set")
         return aio_session_global[0]
 
-    def get_csrf_token(self):
-        """Get a CSRF token from the server"""
-        logging.info(f"Getting CSRF token")
-        response = self.session.get(f"{self.url}/auth/csrf/")
-
-        csrf_token = response.headers.get('X-CSRFToken')
-
-        if not csrf_token and 'csrftoken' in self.session.cookies:
-            csrf_token = self.session.cookies['csrftoken']
-
-        if not csrf_token and response.headers.get('Content-Type') == 'application/json':
-            try:
-                csrf_token = response.json().get('csrfToken')
-            except:
-                pass
-
-        if not csrf_token:
-            logging.error("Failed to get CSRF token")
-            raise Exception("Failed to get CSRF token")
-
-        logging.info(f"Got CSRF token")
-        return csrf_token
-
     def register(self, username, first_name, last_name, email, password, discord_username):
         logging.info(f"Registering {username} with email {email}")
 
         try:
-            csrf_token = self.get_csrf_token()
-
-            headers = self.headers.copy()
-            headers['X-CSRFToken'] = csrf_token
 
             data = {
                 "username": username,
                 "first_name": first_name,
                 "last_name": last_name,
                 "email": email,
-                "password": password,
                 "discord_username": discord_username,
             }
 
             response = self.session.post(
-                f"{self.url}/auth/register/", headers=headers, json=data
+                f"{self.url}/auth/register/ssflow/", headers=self.headers, json=data
             )
-            return response.status_code
+
+            return response.status_code, response.json()
 
         except Exception as e:
             logging.error(f"Registration error: {str(e)}")
