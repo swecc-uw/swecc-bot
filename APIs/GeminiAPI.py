@@ -37,7 +37,8 @@ class GeminiAPI:
         context_invalidation_time_seconds=10 * 60,  # 10 minutes
     ):
         self.api_key = os.getenv("GEMINI_API_KEY")
-        self.allowed_channels = [int(os.getenv("OFF_TOPIC_CHANNEL_ID"))]
+        self.OFF_TOPIC_CHANNEL_ID = int(os.getenv("OFF_TOPIC_CHANNEL_ID"))
+        self.allowed_channels = [self.OFF_TOPIC_CHANNEL_ID]
         self.allowlisted_roles_id = [int(os.getenv("OFFICER_ROLE_ID"))]
         self.model_name = "gemini-2.0-flash-001"
 
@@ -71,6 +72,23 @@ class GeminiAPI:
 
     def generate_system_instruction(self, is_authorized=False):
         return f"{self.ROLE}\n{self.MESSAGE_FORMAT_INSTRUCTION}\n{self.AUTHORIZED_INSTRUCTION if is_authorized else self.UNAUTHORIZED_INSTRUCTION}\n{self.EXPECTED_RESPONSE_INFO}"
+
+    async def prompt_model_unnerfed(self, text):
+        config = types.GenerateContentConfig(
+            max_output_tokens=500,
+            temperature=0.8,
+        )
+
+        try:
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=f"{text}",
+                config=config,
+            )
+
+            return response.text
+        except Exception as e:
+            logging.error(f"Error in prompt_model: {e}")
 
     async def prompt_model(self, text, is_authorized=False):
 
@@ -176,3 +194,19 @@ class GeminiAPI:
         self.update_context(message_info)
         logging.info(f"Response: {message_info.response}")
         await message.channel.send(cleaned_response)
+
+    async def get_welcome_message(self, username, discord_id):
+        response = await self.prompt_model_unnerfed(
+            f"""
+            {self.ROLE}
+
+            You should write a fun and unique welcome message for {username}.
+            They just joined the club and are excited to meet everyone!
+
+            You can ping them using <@{discord_id}> to get their attention.
+
+            At the end of your message, be sure to tell them that they can
+            always reach you in <#{self.OFF_TOPIC_CHANNEL_ID}> if they have any questions or
+            need help with anything.
+            """
+        )

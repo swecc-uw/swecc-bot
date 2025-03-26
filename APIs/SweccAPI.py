@@ -25,6 +25,7 @@ class SweccAPI:
             int(os.getenv("INTERNSHIP_CHANNEL_ID")),
         }
         self.COMPLETED_EMOJI = "✅"
+        self.session = requests.Session()
 
     def set_session(self, session: aiohttp.ClientSession):
         aio_session_global[0] = session
@@ -34,6 +35,29 @@ class SweccAPI:
             logging.error("SweccAPI session not set")
             raise Exception("aiohttp session not set")
         return aio_session_global[0]
+
+    def register(self, username, first_name, last_name, email, password, discord_username):
+        logging.info(f"Registering {username} with email {email}")
+
+        try:
+
+            data = {
+                "username": username,
+                "first_name": first_name,
+                "last_name": last_name,
+                "email": email,
+                "discord_username": discord_username,
+            }
+
+            response = self.session.post(
+                f"{self.url}/auth/register/ssflow/", headers=self.headers, json=data
+            )
+
+            return response.status_code, response.json()
+
+        except Exception as e:
+            logging.error(f"Registration error: {str(e)}")
+            raise e
 
     def auth(self, discord_username, id, username):
         logging.info(
