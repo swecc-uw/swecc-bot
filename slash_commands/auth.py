@@ -4,7 +4,6 @@ import secrets
 from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
-VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
 
 class RegisterModal(discord.ui.Modal, title="Register Your Account"):
     def __init__(self, bot_context, verified_role):
@@ -106,8 +105,8 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             )
 
 async def register(ctx: discord.Interaction):
-
-    if (role := ctx.guild.get_role(VERIFIED_ROLE_ID)) and role in ctx.user.roles:
+    verified_rid = bot_context.verified_role_id
+    if (role := ctx.guild.get_role(verified_rid)) and role in ctx.user.roles:
         usr_msg = f"You are already verified"
         sys_msg = f"{ctx.user.display_name} has tried to register but is already verified."
 
@@ -115,7 +114,7 @@ async def register(ctx: discord.Interaction):
         await bot_context.log(ctx, sys_msg)
     elif role is None:
         usr_msg = f"Something went wrong. Please contact an admin."
-        sys_msg = f"ERROR: Role {VERIFIED_ROLE_ID} not found, skipping registration for {ctx.user.display_name}"
+        sys_msg = f"ERROR: Role {verified_rid} not found, skipping registration for {ctx.user.display_name}"
 
         await ctx.response.send_message(usr_msg, ephemeral=True)
         await bot_context.log(ctx, sys_msg)
@@ -130,8 +129,6 @@ async def register(ctx: discord.Interaction):
 class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
     def __init__(self, bot_context):
         super().__init__(timeout=None)
-
-        self.VERIFIED_ROLE_ID = int(os.getenv("VERIFIED_ROLE_ID"))
 
         self.bot_context = bot_context
 
@@ -158,10 +155,10 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
                 f"{interaction.user.display_name} has verified their account.",
             )
 
-            if (role := interaction.guild.get_role(self.VERIFIED_ROLE_ID)) is None:
+            if (role := interaction.guild.get_role(self.bot_context.verified_role_id)) is None:
                 await self.bot_context.log(
                     interaction,
-                    f"ERROR: Role {self.VERIFIED_ROLE_ID} not found for {interaction.user.display_name}",
+                    f"ERROR: Role {self.bot_context.verified_role_id} not found for {interaction.user.display_name}",
                 )
                 return
 

@@ -4,11 +4,15 @@ class BotContext:
     def __init__(self):
         self.ephemeral = True
         self.token = os.getenv('DISCORD_TOKEN')
-        self.admin_channel = int(os.getenv('ADMIN_CHANNEL'))
-        self.prefix = os.getenv('PREFIX_COMMAND')
         self.swecc_server = int(os.getenv('SWECC_SERVER'))
+
+        self.admin_channel = int(os.getenv('ADMIN_CHANNEL'))
         self.transcripts_channel = int(os.getenv('TRANSCRIPTS_CHANNEL'))
         self.resume_channel = int(os.getenv('SWECC_RESUME_CHANNEL'))
+
+        self.verified_role_id = int(os.getenv('VERIFIED_ROLE_ID'))
+
+        self.prefix = os.getenv('PREFIX_COMMAND')
         self.badwords = ['ticket', 'free.*macbook', 'macbook.*free', '\$']
         self.do_not_timeout = set()
     
