@@ -108,7 +108,7 @@ class AsyncRabbitProducer:
                 connected = await self.connect()
                 if not connected:
                     LOGGER.warning(
-                        f"Failed to connect to RabbitMQ for publishing to {self._exchange}, attempt {retry_count+1}/{max_retries}"
+                        f"Failed to connect to RabbitMQ for publishing to {self._exchange}, attempt {retry_count+1}/{MAX_RETRIES}"
                     )
                     retry_count += 1
                     await asyncio.sleep(1)
