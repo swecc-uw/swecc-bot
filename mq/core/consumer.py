@@ -41,16 +41,25 @@ class AsyncRabbitConsumer:
             f"Connecting to {self._url} for exchange {self._exchange}, queue {self._queue}"
         )
 
-        future_connection = AsyncioConnection(
-            parameters=pika.URLParameters(self._url),
-            on_open_callback=self.on_connection_open,
-            on_open_error_callback=self.on_connection_open_error,
-            on_close_callback=self.on_connection_closed,
-            custom_ioloop=loop,
-        )
+        try:
+            if self._connection and not (self._connection.is_closed or self._connection.is_closing):
+                LOGGER.info(f"Using existing connection for {self._queue}")
+                return self._connection
 
-        self._connection = future_connection
-        return self._connection
+            future_connection = AsyncioConnection(
+                parameters=pika.URLParameters(self._url),
+                on_open_callback=self.on_connection_open,
+                on_open_error_callback=self.on_connection_open_error,
+                on_close_callback=self.on_connection_closed,
+                custom_ioloop=loop,
+            )
+
+            self._connection = future_connection
+            return self._connection
+        except Exception as e:
+            LOGGER.error(f"Failed to create connection for {self._queue}: {str(e)}")
+            self._connection = None
+            raise
 
     def on_connection_open(self, connection):
         LOGGER.info(f"Connection opened for {self._queue}")
@@ -83,36 +92,35 @@ class AsyncRabbitConsumer:
     def setup_exchange(self, exchange_name):
         """declare exchange"""
         LOGGER.info(f"Declaring exchange: {exchange_name}")
-        cb = functools.partial(self.on_exchange_declareok, userdata=exchange_name)
+        cb = functools.partial(self.on_exchange_declareok, exchange_name=exchange_name)
         self._channel.exchange_declare(
             exchange=exchange_name, exchange_type=self._exchange_type, callback=cb
         )
 
-    def on_exchange_declareok(self, _unused_frame, userdata):
+    def on_exchange_declareok(self, _unused_frame, exchange_name):
         """exchange is declared"""
-        LOGGER.info(f"Exchange declared: {userdata}")
+        LOGGER.info(f"Exchange declared: {exchange_name}")
         self.setup_queue(self._queue)
 
     def setup_queue(self, queue_name):
         """declare the queue"""
         LOGGER.info(f"Declaring queue {queue_name}")
-        cb = functools.partial(self.on_queue_declareok, userdata=queue_name)
+        cb = functools.partial(self.on_queue_declareok, queue_name=queue_name)
         self._channel.queue_declare(queue=queue_name, callback=cb)
 
-    def on_queue_declareok(self, _unused_frame, userdata):
+    def on_queue_declareok(self, _unused_frame, queue_name):
         """queue is declared"""
-        queue_name = userdata
         LOGGER.info(
             f"Binding {self._exchange} to {queue_name} with {self._routing_key}"
         )
-        cb = functools.partial(self.on_bindok, userdata=queue_name)
+        cb = functools.partial(self.on_bindok, queue_name=queue_name)
         self._channel.queue_bind(
             queue_name, self._exchange, routing_key=self._routing_key, callback=cb
         )
 
-    def on_bindok(self, _unused_frame, userdata):
+    def on_bindok(self, _unused_frame, queue_name):
         """queue bound to exchange"""
-        LOGGER.info(f"Queue bound: {userdata}")
+        LOGGER.info(f"Queue bound: {queue_name}")
         self.set_qos()
 
     def set_qos(self):
@@ -160,13 +168,31 @@ class AsyncRabbitConsumer:
     def close_connection(self):
         self._closing = True
         LOGGER.info(f"Closing connection for {self._queue}")
-        self._connection.close()
+        try:
+            if self._connection and not (self._connection.is_closed):
+                self._connection.close()
+            else:
+                LOGGER.info(f"Connection already closed for {self._queue}")
+        except pika.exceptions.ConnectionWrongStateError as e:
+            LOGGER.warning(f"Connection already in closed state for {self._queue}: {str(e)}")
+        except Exception as e:
+            LOGGER.error(f"Error closing connection for {self._queue}: {str(e)}")
 
     async def shutdown(self):
         LOGGER.info(f"Shutting down consumer for {self._queue}")
-        if self._channel:
-            self.stop_consuming()
-        if self._connection and not (
-            self._connection.is_closing or self._connection.is_closed
-        ):
-            self.close_connection()
+        try:
+            if self._channel:
+                self.stop_consuming()
+
+            if self._connection and not (
+                self._connection.is_closing or self._connection.is_closed
+            ):
+                self.close_connection()
+        except pika.exceptions.ConnectionWrongStateError as e:
+            LOGGER.warning(f"Connection already closed for {self._queue}: {str(e)}")
+        except Exception as e:
+            LOGGER.error(f"Error during shutdown for {self._queue}: {str(e)}")
+        finally:
+            self._channel = None
+            self._connection = None
+            self._consumer_tag = None

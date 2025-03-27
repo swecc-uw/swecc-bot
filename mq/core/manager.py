@@ -77,7 +77,10 @@ class RabbitMQManager:
                     producer_name, exchange, exchange_type, routing_key
                 )
 
-                if needs_context and self.client and self.bot_context:
+                if needs_context:
+                    assert self.client and self.bot_context, (
+                        "Producer needs context but no client or bot_context set"
+                    )
                     processed_message = await func(
                         message, self.client, self.bot_context
                     )
