@@ -74,6 +74,11 @@ def format_reading_pages(chapter_indices: List[int]) -> Tuple[List[str], int]:
 async def create_reading_group_thread(interaction: discord.Interaction, week: int, date: str, time: str, location: str):
     await interaction.response.defer(ephemeral=True)
 
+    officer_role = interaction.guild.get_role(bot_context.officer_role_id)
+    if officer_role not in interaction.user.roles:
+        await interaction.followup.send("You do not have permission to create reading group threads.", ephemeral=True)
+        return
+
     if week < 1 or week > len(config.chapter_schedule):
         await interaction.followup.send(f"Invalid week. Please choose a week between 1 and {len(config.chapter_schedule)}.", ephemeral=True)
         return
