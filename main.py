@@ -7,6 +7,7 @@ from APIs.SweccAPI import SweccAPI
 import slash_commands.misc as misc
 import slash_commands.auth as auth
 import slash_commands.admin as admin
+import slash_commands.reading as reading
 from settings.context import BotContext
 import asyncio
 from tasks.index import start_daily_tasks
@@ -83,6 +84,7 @@ async def on_raw_reaction_remove(payload):
 misc.setup(client, bot_context)
 auth.setup(client, bot_context)
 admin.setup(client, bot_context)
+reading.setup(client, bot_context)
 
 async def main():
     async with aiohttp.ClientSession() as session, client:
