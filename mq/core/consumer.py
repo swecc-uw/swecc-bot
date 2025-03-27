@@ -62,11 +62,10 @@ class AsyncRabbitConsumer:
     def on_connection_closed(self, connection, reason):
         self._channel = None
         if self._closing:
-            LOGGER.info(f"Connection closed for {self._queue}")
+            LOGGER.info(f'Connection closed for {self._queue}')
         else:
-            LOGGER.warning(
-                f"Connection closed unexpectedly for {self._queue}: {reason}"
-            )
+            LOGGER.warning(f'Connection closed unexpectedly for {self._queue}: {reason}')
+            # health monitor handles reconnection
 
     def open_channel(self):
         LOGGER.info(f"Creating a new channel for {self._queue}")

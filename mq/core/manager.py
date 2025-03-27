@@ -195,3 +195,33 @@ class RabbitMQManager:
             if not producer._connected:
                 LOGGER.info(f"Connecting producer: {name}")
                 await producer.connect(loop=loop)
+
+    async def start_health_monitor(self, bot):
+
+        LOGGER.info("Starting RabbitMQ connection health monitor")
+
+        async def health_monitor():
+            while True:
+                try:
+                    for name, consumer in list(self.consumers.items()):
+                        if not consumer._connection or not consumer._channel:
+                            LOGGER.warning(f"Consumer {name} disconnected, attempting to reconnect")
+                            try:
+                                await consumer.connect(loop=bot.loop)
+                            except Exception as e:
+                                LOGGER.error(f"Failed to reconnect consumer {name}: {str(e)}")
+
+                    for name, producer in list(self.producers.items()):
+                        if not producer._connected or not producer._channel:
+                            LOGGER.warning(f"Producer {name} disconnected, attempting to reconnect")
+                            try:
+                                await producer.connect(loop=bot.loop)
+                            except Exception as e:
+                                LOGGER.error(f"Failed to reconnect producer {name}: {str(e)}")
+
+                    await asyncio.sleep(30)
+                except Exception as e:
+                    LOGGER.error(f"Error in health monitor: {str(e)}")
+                    await asyncio.sleep(60)
+
+        bot.loop.create_task(health_monitor())

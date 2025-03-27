@@ -4,7 +4,7 @@ from discord.ext import commands
 from pika.exchange_type import ExchangeType
 from mq.core.manager import RabbitMQManager
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 _manager = RabbitMQManager()
 
@@ -41,7 +41,7 @@ def setup(bot, bot_context):
     setup function for the module, called in bot entrypoint to hook
     into lifecycle management, inject deps, etc.
     """
-    logger.info("Setting up RabbitMQ")
+    LOGGER.info("Setting up RabbitMQ")
 
     # bot has a rabbit parasite. "what's mine is yours", it says.
     _manager.set_context(bot, bot_context)
@@ -74,10 +74,16 @@ async def initialize_rabbitmq(bot):
 
     _manager.create_consumers()
 
-    await _manager.start_consumers(bot.loop)
-    await _manager.connect_producers(bot.loop)
-
-    logger.info("RabbitMQ consumers and producers initialized")
+    try:
+        await _manager.start_consumers(bot.loop)
+        await _manager.connect_producers(bot.loop)
+        LOGGER.info("RabbitMQ consumers and producers initialized")
+    except Exception as e:
+        LOGGER.error(f"Error initializing RabbitMQ: {str(e)}")
+        LOGGER.info("Will continue to retry connections in the background")
+    finally:
+        LOGGER.info("Starting health monitor")
+        await _manager.start_health_monitor(bot)
 
 
 async def shutdown_rabbitmq():

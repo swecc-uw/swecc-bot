@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional, Union
 
 LOGGER = logging.getLogger(__name__)
 
+MAX_RETRIES = 3
+
 
 class AsyncRabbitProducer:
 
@@ -99,19 +101,31 @@ class AsyncRabbitProducer:
     async def publish(
         self, message, routing_key=None, properties=None, mandatory=False
     ):
-        if not self._connected:
-            connected = await self.connect()
-            if not connected:
-                LOGGER.error(
-                    f"Failed to connect to RabbitMQ for publishing to {self._exchange}"
-                )
-                return False
+        retry_count = 0
+
+        while not self._connected and retry_count < MAX_RETRIES:
+            try:
+                connected = await self.connect()
+                if not connected:
+                    LOGGER.warning(
+                        f"Failed to connect to RabbitMQ for publishing to {self._exchange}, attempt {retry_count+1}/{max_retries}"
+                    )
+                    retry_count += 1
+                    await asyncio.sleep(1)
+                else:
+                    break
+            except Exception as e:
+                LOGGER.error(f"Error connecting to RabbitMQ: {str(e)}")
+                retry_count += 1
+                await asyncio.sleep(1)
+
+        if not self._connected or not self._channel:
+            LOGGER.error(
+                f"No connection or channel available for publishing to {self._exchange}"
+            )
+            return False
 
         await self._ready.wait()
-
-        if not self._channel:
-            LOGGER.error(f"No channel available for publishing to {self._exchange}")
-            return False
 
         actual_routing_key = routing_key or self._default_routing_key
         if not actual_routing_key:
@@ -135,7 +149,12 @@ class AsyncRabbitProducer:
             )
             return True
         except Exception as e:
-            LOGGER.error(f"Failed to publish message: {e}")
+            LOGGER.error(f"Failed to publish message: {str(e)}")
+            # mark as disconnected so the health monitor will reconnect it
+            # debatable whether this is the right approach, will have
+            # to see how common failures are and whether they are naturally
+            # recovered
+            self._connected = False
             return False
 
     async def close(self):
