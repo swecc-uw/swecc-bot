@@ -44,10 +44,10 @@ async def on_member_remove(member: discord.Member):
 async def on_member_join(member: discord.Member):
     if member.guild.id == bot_context.swecc_server:
         await bot_context.log(member, f"{member.display_name} ({member.id}) has joined the server.")
-        await member.send((
+        await member.send(
             f"Welcome to the Software Engineering Career Club Discord server, {member.mention}!"
-            " In order to become become a member, please register"
-            " using the `/register` command, or signing up on https://engagement.swecc.org.")
+            " In order to become a member, please register"
+            " using the `/register` command, or signing up on https://engagement.swecc.org."
         )
 
 @client.event
