@@ -1,4 +1,5 @@
 import os
+import urllib.parse
 import asyncio
 import logging
 from typing import Dict, List, Optional, Callable, Any, Coroutine
@@ -28,12 +29,12 @@ class RabbitMQManager:
         self.bot_context = bot_context
 
     def _build_amqp_url(self) -> str:
-        user = os.getenv("RABBIT_USER", "guest")
-        password = os.getenv("RABBIT_PASS", "guest")
+        user = os.getenv("BOT_RABBIT_USER", "guest")
+        password = os.getenv("BOT_RABBIT_PASS", "guest")
         host = os.getenv("RABBIT_HOST", "rabbitmq-host")
         port = os.getenv("RABBIT_PORT", "5672")
-        vhost = os.getenv("RABBIT_VHOST", "%2F")
-
+        vhost = os.getenv("RABBIT_VHOST", "/")
+        vhost = urllib.parse.quote(vhost, safe="")
         return f"amqp://{user}:{password}@{host}:{port}/{vhost}"
 
     def register_callback(
