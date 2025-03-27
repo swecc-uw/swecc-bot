@@ -47,7 +47,7 @@ async def on_member_join(member: discord.Member):
         await member.send(
             f"Welcome to the Software Engineering Career Club Discord server, {member.mention}!"
             " In order to become a member, please register"
-            " using the `/register` command, or signing up on https://engagement.swecc.org."
+            " using the `/register` command, or by signing up on https://engagement.swecc.org."
         )
 
 @client.event
