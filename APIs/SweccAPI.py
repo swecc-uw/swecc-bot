@@ -7,6 +7,8 @@ logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
 )
 
+logger = logging.getLogger(__name__)
+
 aio_session_global = [None]
 
 
@@ -36,7 +38,9 @@ class SweccAPI:
             raise Exception("aiohttp session not set")
         return aio_session_global[0]
 
-    def register(self, username, first_name, last_name, email, password, discord_username):
+    def register(
+        self, username, first_name, last_name, email, password, discord_username
+    ):
         logging.info(f"Registering {username} with email {email}")
 
         try:
@@ -278,3 +282,34 @@ class SweccAPI:
         except Exception as e:
             logging.error("Failed to get cohort stats: %s", e)
             return None
+
+    async def get_school_email_verification_url(self, discord_id, email):
+        logging.info(
+            f"Getting school email verification url for {discord_id} with email {email}"
+        )
+
+        data = {
+            "discord_id": discord_id,
+            "school_email": email,
+        }
+
+        session = self.get_session()
+        try:
+            async with session.post(
+                f"{self.url}/members/verify-school-email/",
+                headers=self.headers,
+                json=data,
+            ) as response:
+                if response.status != 200:
+                    logging.error(
+                        "Failed to get verification URL",
+                        response.status,
+                        await response.json(),
+                    )
+                    return None
+                data = await response.json()
+                logger.info("Received verification URL: %s", data)
+                return True
+        except Exception as e:
+            logging.error("Failed to get verification URL: %s", e)
+            return False

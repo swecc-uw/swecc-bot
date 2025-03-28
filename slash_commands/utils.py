@@ -20,3 +20,7 @@ async def handle_cohort_stat_update(
             title="Error", description=error["message"], color=discord.Color.red()
         )
         await ctx.response.send_message(embed=embed, ephemeral=bot_context.ephemeral)
+
+
+def is_valid_school_email(email: str) -> bool:
+    return email.endswith("@uw.edu")
