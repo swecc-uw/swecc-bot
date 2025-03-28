@@ -12,6 +12,7 @@ from settings.context import BotContext
 import asyncio
 from tasks.index import start_daily_tasks
 import admin.filter as filter
+import mq
 
 load_dotenv()
 
@@ -21,7 +22,6 @@ bot_context = BotContext()
 intents = discord.Intents.all()
 intents.message_content = True
 do_not_timeout = set()
-
 client = commands.Bot(command_prefix=bot_context.prefix, intents=intents)
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
 
@@ -57,6 +57,7 @@ async def on_message(message):
     if member == client.user:
         return
     
+    await mq.producers.publish_discord_message(message.content)
     await filter.filter_message(message, bot_context)
     await swecc.process_message_event(message)
     await gemini.process_message_event(message)
@@ -107,6 +108,13 @@ async def main():
         except Exception as e:
             logging.info(f"Failed to start daily tasks: {e}")
 
-        await client.start(bot_context.token)
+        try:
+            await client.start(bot_context.token)
+        except Exception as e:
+            logging.info(f"Failed to start client: {e}")
+        finally:
+            await mq.shutdown_rabbitmq()
+
+mq.setup(client, bot_context)
 
 asyncio.run(main())
