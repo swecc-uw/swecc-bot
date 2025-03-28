@@ -153,18 +153,6 @@ class AsyncRabbitConsumer:
             # process in event loop
             asyncio.create_task(self.message_callback(body, properties))
 
-        self.acknowledge_message(basic_deliver.delivery_tag)
-
-    def acknowledge_message(self, delivery_tag):
-        LOGGER.info(f"Acknowledging message {delivery_tag} on {self._queue}")
-        if self._channel:
-            LOGGER.info(f"ack-ing {delivery_tag} on {self._queue}")
-            # self._channel.basic_ack(delivery_tag)
-        else:
-            LOGGER.warning(
-                f"Channel is not open for acknowledging message: {self._queue}"
-            )
-
     def stop_consuming(self):
         if self._channel:
             LOGGER.info(f"Stopping consumption for {self._queue}")
