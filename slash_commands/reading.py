@@ -125,18 +125,12 @@ async def create_reading_group_thread(interaction: discord.Interaction, week: in
         await thread.send("Feel free to share your thoughts, questions, and insights on this week's reading.")
 
         await interaction.followup.send(f"Successfully posted reading assignment for Week {week}.", ephemeral=True)
-
-        admin_channel = interaction.guild.get_channel(bot_context.admin_channel)
-        if admin_channel:
-            await admin_channel.send(f"User {interaction.user.mention} created reading assignment for Week {week}.")
+        await bot_context.log(f"User {interaction.user.mention} created reading assignment for Week {week}.")
 
     except Exception as e:
         error_msg = f"Failed to send reading group assignment: {e}"
         await interaction.followup.send(error_msg, ephemeral=True)
-
-        admin_channel = interaction.guild.get_channel(bot_context.admin_channel)
-        if admin_channel:
-            await admin_channel.send(f"Failed to create reading group thread: {e}")
+        await bot_context.log(f"Failed to create reading group thread: {e}")
 
 def setup(client, context):
     global bot_context
