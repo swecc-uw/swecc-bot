@@ -72,7 +72,8 @@ class AsyncRabbitProducer:
 
     def open_channel(self):
         LOGGER.info(f"Creating a new channel for producer {self._exchange}")
-        self._connection.channel(on_open_callback=self.on_channel_open)
+        if self._connection:
+            self._connection.channel(on_open_callback=self.on_channel_open)
 
     def on_channel_open(self, channel):
         LOGGER.info(f"Channel opened for producer {self._exchange}")
@@ -83,15 +84,19 @@ class AsyncRabbitProducer:
     def on_channel_closed(self, channel, reason):
         LOGGER.warning(f"Channel was closed for producer {self._exchange}: {reason}")
         if not self._closing:
-            self._connection.close()
+            if self._connection and self._connection.is_open:
+                self._connection.close()
 
     def setup_exchange(self):
         LOGGER.info(f"Declaring exchange: {self._exchange}")
-        self._channel.exchange_declare(
-            exchange=self._exchange,
-            exchange_type=self._exchange_type,
-            callback=self.on_exchange_declareok,
-        )
+        if self._channel:
+            self._channel.exchange_declare(
+                exchange=self._exchange,
+                exchange_type=self._exchange_type,
+                callback=self.on_exchange_declareok,
+            )
+        else:
+            LOGGER.warning(f"Channel is not open for exchange declaration: {self._exchange}")
 
     def on_exchange_declareok(self, _unused_frame):
         LOGGER.info(f"Exchange declared: {self._exchange}")

@@ -4,6 +4,7 @@ import functools
 from typing import Callable, Dict, List, Optional, Any, Coroutine
 
 import pika
+import pika.exceptions
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
 
@@ -16,6 +17,7 @@ class AsyncRabbitConsumer:
         amqp_url: str,
         exchange: str,
         exchange_type: ExchangeType,
+        declare_exchange: bool,
         queue: str,
         routing_key: str,
         callback: Callable[[bytes, Any], Coroutine],
@@ -29,6 +31,7 @@ class AsyncRabbitConsumer:
         self._routing_key = routing_key
         self.message_callback = callback
         self._prefetch_count = prefetch_count
+        self._declare_exchange = declare_exchange
 
         # connection state
         self._connection = None
@@ -78,7 +81,10 @@ class AsyncRabbitConsumer:
 
     def open_channel(self):
         LOGGER.info(f"Creating a new channel for {self._queue}")
-        self._connection.channel(on_open_callback=self.on_channel_open)
+        if self._connection:
+            self._connection.channel(on_open_callback=self.on_channel_open)
+        else:
+            LOGGER.warning(f"Connection is not open for {self._queue}")
 
     def on_channel_open(self, channel):
         LOGGER.info(f"Channel opened for {self._queue}")
@@ -91,11 +97,18 @@ class AsyncRabbitConsumer:
 
     def setup_exchange(self, exchange_name):
         """declare exchange"""
-        LOGGER.info(f"Declaring exchange: {exchange_name}")
-        cb = functools.partial(self.on_exchange_declareok, exchange_name=exchange_name)
-        self._channel.exchange_declare(
-            exchange=exchange_name, exchange_type=self._exchange_type, callback=cb
-        )
+        if self._declare_exchange:
+            LOGGER.info(f"Declaring exchange: {exchange_name}")
+            cb = functools.partial(self.on_exchange_declareok, exchange_name=exchange_name)
+            if self._channel:
+                self._channel.exchange_declare(
+                    exchange=exchange_name, exchange_type=self._exchange_type, callback=cb
+                )
+            else:
+                LOGGER.warning(f"Channel is not open for exchange declaration: {exchange_name}")
+        else:
+            LOGGER.info(f"Skipping exchange declaration for {exchange_name}")
+            self.setup_queue(self._queue)
 
     def on_exchange_declareok(self, _unused_frame, exchange_name):
         """exchange is declared"""
@@ -106,7 +119,10 @@ class AsyncRabbitConsumer:
         """declare the queue"""
         LOGGER.info(f"Declaring queue {queue_name}")
         cb = functools.partial(self.on_queue_declareok, queue_name=queue_name)
-        self._channel.queue_declare(queue=queue_name, callback=cb)
+        if self._channel:
+            self._channel.queue_declare(queue=queue_name, callback=cb)
+        else:
+            LOGGER.warning(f"Channel is not open for queue declaration: {queue_name}")
 
     def on_queue_declareok(self, _unused_frame, queue_name):
         """queue is declared"""
@@ -114,9 +130,12 @@ class AsyncRabbitConsumer:
             f"Binding {self._exchange} to {queue_name} with {self._routing_key}"
         )
         cb = functools.partial(self.on_bindok, queue_name=queue_name)
-        self._channel.queue_bind(
-            queue_name, self._exchange, routing_key=self._routing_key, callback=cb
-        )
+        if self._channel:
+            self._channel.queue_bind(
+                queue_name, self._exchange, routing_key=self._routing_key, callback=cb
+            )
+        else:
+            LOGGER.warning(f"Channel is not open for queue binding: {queue_name}")
 
     def on_bindok(self, _unused_frame, queue_name):
         """queue bound to exchange"""
@@ -125,9 +144,12 @@ class AsyncRabbitConsumer:
 
     def set_qos(self):
         """set prefetch count"""
-        self._channel.basic_qos(
-            prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok
-        )
+        if self._channel:
+            self._channel.basic_qos(
+                prefetch_count=self._prefetch_count, callback=self.on_basic_qos_ok
+            )
+        else:
+            LOGGER.warning(f"Channel is not open for setting QoS: {self._queue}")
 
     def on_basic_qos_ok(self, _unused_frame):
         """called when QoS set"""
@@ -136,7 +158,10 @@ class AsyncRabbitConsumer:
 
     def start_consuming(self):
         LOGGER.info(f"Starting to consume messages for {self._queue}")
-        self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
+        if self._channel:
+            self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
+        else:
+            LOGGER.warning(f"Channel is not open for consuming messages: {self._queue}")
 
     def on_message(self, _unused_channel, basic_deliver, properties, body):
         LOGGER.info(f"Received message # {basic_deliver.delivery_tag} on {self._queue}")
@@ -149,7 +174,10 @@ class AsyncRabbitConsumer:
 
     def acknowledge_message(self, delivery_tag):
         LOGGER.info(f"Acknowledging message {delivery_tag} on {self._queue}")
-        self._channel.basic_ack(delivery_tag)
+        if self._channel:
+            self._channel.basic_ack(delivery_tag)
+        else:
+            LOGGER.warning(f"Channel is not open for acknowledging message: {self._queue}")
 
     def stop_consuming(self):
         if self._channel:
@@ -163,7 +191,10 @@ class AsyncRabbitConsumer:
 
     def close_channel(self):
         LOGGER.info(f"Closing the channel for {self._queue}")
-        self._channel.close()
+        if self._channel:
+            self._channel.close()
+        else:
+            LOGGER.warning(f"Channel is already closed for {self._queue}")
 
     def close_connection(self):
         self._closing = True
