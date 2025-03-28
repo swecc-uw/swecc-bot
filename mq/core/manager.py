@@ -214,6 +214,17 @@ class RabbitMQManager:
         async def health_monitor():
             while True:
                 try:
+
+                    if not ConnectionManager().is_connected():
+                        LOGGER.warning(
+                            "RabbitMQ connection lost, attempting to reconnect"
+                        )
+                        try:
+                            await ConnectionManager().connect(loop=bot.loop)
+                        except Exception as e:
+                            LOGGER.error(f"Failed to reconnect: {str(e)}")
+                            continue
+
                     for name, consumer in list(self.consumers.items()):
                         if not consumer._connection or not consumer._channel:
                             LOGGER.warning(

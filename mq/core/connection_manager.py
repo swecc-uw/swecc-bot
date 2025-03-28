@@ -45,7 +45,7 @@ class ConnectionManager:
             self._connection = future_connection
             return self._connection
         except Exception as e:
-            logger.error(f"Failed to create connection for {self._queue}: {str(e)}")
+            logger.error(f"Failed to create connection: {str(e)}")
             self._connection = None
             raise
 
@@ -83,6 +83,9 @@ class ConnectionManager:
         ):
             self._connection.close()
         self._connected = False
+
+    def is_connected(self):
+        return self._connected
 
     def __new__(cls):
         if cls.instance is None:
