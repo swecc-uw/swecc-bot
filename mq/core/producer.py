@@ -3,6 +3,7 @@ import logging
 import pika
 from pika.adapters.asyncio_connection import AsyncioConnection
 from typing import Any, Dict, Optional, Union
+from .connection_manager import ConnectionManager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,54 +22,30 @@ class AsyncRabbitProducer:
         # connection state
         self._connection = None
         self._channel = None
-        self._closing = False
-        self._ready = asyncio.Event()
         self._connected = False
-        self._loop = None
+        self._ready = asyncio.Event()
 
     async def connect(self, loop=None):
+
         if self._connected:
-            return
+            return self._connection
 
-        self._loop = loop or asyncio.get_event_loop()
-        LOGGER.info(f"Producer connecting to {self._url} for exchange {self._exchange}")
-
-        # create future to wait for connection setup
         self._ready.clear()
 
-        # connect
-        self._connection = AsyncioConnection(
-            parameters=pika.URLParameters(self._url),
-            on_open_callback=self.on_connection_open,
-            on_open_error_callback=self.on_connection_open_error,
-            on_close_callback=self.on_connection_closed,
-            custom_ioloop=self._loop,
+        self._connection = await ConnectionManager().connect(
+            loop=loop or asyncio.get_event_loop()
         )
 
-        # wait for setup to complete
-        await self._ready.wait()
-
-        return self._connected
-
-    def on_connection_open(self, connection):
-        LOGGER.info(f"Producer connection opened for {self._exchange}")
+        LOGGER.info(f"Producer connecting to {self._url} for exchange {self._exchange}")
+        if not self._connection:
+            LOGGER.error(f"Failed to create connection for producer {self._exchange}")
+            return False
         self._connected = True
         self.open_channel()
 
-    def on_connection_open_error(self, connection, err):
-        LOGGER.error(f"Producer connection open failed for {self._exchange}: {err}")
         self._ready.set()
-        self._connected = False
 
-    def on_connection_closed(self, connection, reason):
-        self._channel = None
-        self._connected = False
-        if self._closing:
-            LOGGER.info(f"Producer connection closed for {self._exchange}")
-        else:
-            LOGGER.warning(
-                f"Producer connection closed unexpectedly for {self._exchange}: {reason}"
-            )
+        return self._connection
 
     def open_channel(self):
         LOGGER.info(f"Creating a new channel for producer {self._exchange}")
@@ -83,9 +60,7 @@ class AsyncRabbitProducer:
 
     def on_channel_closed(self, channel, reason):
         LOGGER.warning(f"Channel was closed for producer {self._exchange}: {reason}")
-        if not self._closing:
-            if self._connection and self._connection.is_open:
-                self._connection.close()
+        self._channel = None
 
     def setup_exchange(self):
         LOGGER.info(f"Declaring exchange: {self._exchange}")
@@ -96,7 +71,9 @@ class AsyncRabbitProducer:
                 callback=self.on_exchange_declareok,
             )
         else:
-            LOGGER.warning(f"Channel is not open for exchange declaration: {self._exchange}")
+            LOGGER.warning(
+                f"Channel is not open for exchange declaration: {self._exchange}"
+            )
 
     def on_exchange_declareok(self, _unused_frame):
         LOGGER.info(f"Exchange declared: {self._exchange}")
@@ -163,12 +140,7 @@ class AsyncRabbitProducer:
             return False
 
     async def close(self):
-        self._closing = True
         LOGGER.info(f"Closing producer for {self._exchange}")
         if self._channel and self._channel.is_open:
             self._channel.close()
-        if self._connection and not (
-            self._connection.is_closing or self._connection.is_closed
-        ):
-            self._connection.close()
-        self._connected = False
+        self._channel = None

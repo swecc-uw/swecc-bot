@@ -10,6 +10,7 @@ from discord.ext import commands
 
 from .consumer import AsyncRabbitConsumer
 from .producer import AsyncRabbitProducer
+from .connection_manager import ConnectionManager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -81,9 +82,9 @@ class RabbitMQManager:
                 )
 
                 if needs_context:
-                    assert self.client and self.bot_context, (
-                        "Producer needs context but no client or bot_context set"
-                    )
+                    assert (
+                        self.client and self.bot_context
+                    ), "Producer needs context but no client or bot_context set"
                     processed_message = await func(
                         message, self.client, self.bot_context
                     )
@@ -166,7 +167,7 @@ class RabbitMQManager:
             routing_key=routing_key,
             callback=callback,
             prefetch_count=prefetch_count,
-            declare_exchange=declare_exchange
+            declare_exchange=declare_exchange,
         )
 
         self.consumers[name] = consumer
@@ -181,6 +182,7 @@ class RabbitMQManager:
     async def stop_all(self):
         await self.stop_consumers()
         await self.stop_producers()
+        await ConnectionManager().close()
 
     async def stop_consumers(self):
         LOGGER.info(f"Stopping {len(self.consumers)} RabbitMQ consumers")
@@ -214,19 +216,27 @@ class RabbitMQManager:
                 try:
                     for name, consumer in list(self.consumers.items()):
                         if not consumer._connection or not consumer._channel:
-                            LOGGER.warning(f"Consumer {name} disconnected, attempting to reconnect")
+                            LOGGER.warning(
+                                f"Consumer {name} disconnected, attempting to reconnect"
+                            )
                             try:
                                 await consumer.connect(loop=bot.loop)
                             except Exception as e:
-                                LOGGER.error(f"Failed to reconnect consumer {name}: {str(e)}")
+                                LOGGER.error(
+                                    f"Failed to reconnect consumer {name}: {str(e)}"
+                                )
 
                     for name, producer in list(self.producers.items()):
                         if not producer._connected or not producer._channel:
-                            LOGGER.warning(f"Producer {name} disconnected, attempting to reconnect")
+                            LOGGER.warning(
+                                f"Producer {name} disconnected, attempting to reconnect"
+                            )
                             try:
                                 await producer.connect(loop=bot.loop)
                             except Exception as e:
-                                LOGGER.error(f"Failed to reconnect producer {name}: {str(e)}")
+                                LOGGER.error(
+                                    f"Failed to reconnect producer {name}: {str(e)}"
+                                )
 
                     await asyncio.sleep(30)
                 except Exception as e:

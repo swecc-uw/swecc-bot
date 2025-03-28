@@ -7,6 +7,7 @@ import pika
 import pika.exceptions
 from pika.adapters.asyncio_connection import AsyncioConnection
 from pika.exchange_type import ExchangeType
+from .connection_manager import ConnectionManager
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,39 +46,13 @@ class AsyncRabbitConsumer:
         )
 
         try:
-            if self._connection and not (self._connection.is_closed or self._connection.is_closing):
-                LOGGER.info(f"Using existing connection for {self._queue}")
-                return self._connection
-
-            future_connection = AsyncioConnection(
-                parameters=pika.URLParameters(self._url),
-                on_open_callback=self.on_connection_open,
-                on_open_error_callback=self.on_connection_open_error,
-                on_close_callback=self.on_connection_closed,
-                custom_ioloop=loop,
-            )
-
-            self._connection = future_connection
-            return self._connection
+            self._connection = await ConnectionManager().connect(loop=loop)
         except Exception as e:
             LOGGER.error(f"Failed to create connection for {self._queue}: {str(e)}")
             self._connection = None
             raise
 
-    def on_connection_open(self, connection):
-        LOGGER.info(f"Connection opened for {self._queue}")
         self.open_channel()
-
-    def on_connection_open_error(self, connection, err):
-        LOGGER.error(f"Connection open failed for {self._queue}: {err}")
-
-    def on_connection_closed(self, connection, reason):
-        self._channel = None
-        if self._closing:
-            LOGGER.info(f'Connection closed for {self._queue}')
-        else:
-            LOGGER.warning(f'Connection closed unexpectedly for {self._queue}: {reason}')
-            # health monitor handles reconnection
 
     def open_channel(self):
         LOGGER.info(f"Creating a new channel for {self._queue}")
@@ -99,13 +74,19 @@ class AsyncRabbitConsumer:
         """declare exchange"""
         if self._declare_exchange:
             LOGGER.info(f"Declaring exchange: {exchange_name}")
-            cb = functools.partial(self.on_exchange_declareok, exchange_name=exchange_name)
+            cb = functools.partial(
+                self.on_exchange_declareok, exchange_name=exchange_name
+            )
             if self._channel:
                 self._channel.exchange_declare(
-                    exchange=exchange_name, exchange_type=self._exchange_type, callback=cb
+                    exchange=exchange_name,
+                    exchange_type=self._exchange_type,
+                    callback=cb,
                 )
             else:
-                LOGGER.warning(f"Channel is not open for exchange declaration: {exchange_name}")
+                LOGGER.warning(
+                    f"Channel is not open for exchange declaration: {exchange_name}"
+                )
         else:
             LOGGER.info(f"Skipping exchange declaration for {exchange_name}")
             self.setup_queue(self._queue)
@@ -159,7 +140,9 @@ class AsyncRabbitConsumer:
     def start_consuming(self):
         LOGGER.info(f"Starting to consume messages for {self._queue}")
         if self._channel:
-            self._consumer_tag = self._channel.basic_consume(self._queue, self.on_message)
+            self._consumer_tag = self._channel.basic_consume(
+                self._queue, on_message_callback=self.on_message, auto_ack=True
+            )
         else:
             LOGGER.warning(f"Channel is not open for consuming messages: {self._queue}")
 
@@ -175,9 +158,12 @@ class AsyncRabbitConsumer:
     def acknowledge_message(self, delivery_tag):
         LOGGER.info(f"Acknowledging message {delivery_tag} on {self._queue}")
         if self._channel:
-            self._channel.basic_ack(delivery_tag)
+            LOGGER.info(f"ack-ing {delivery_tag} on {self._queue}")
+            # self._channel.basic_ack(delivery_tag)
         else:
-            LOGGER.warning(f"Channel is not open for acknowledging message: {self._queue}")
+            LOGGER.warning(
+                f"Channel is not open for acknowledging message: {self._queue}"
+            )
 
     def stop_consuming(self):
         if self._channel:
@@ -196,34 +182,13 @@ class AsyncRabbitConsumer:
         else:
             LOGGER.warning(f"Channel is already closed for {self._queue}")
 
-    def close_connection(self):
-        self._closing = True
-        LOGGER.info(f"Closing connection for {self._queue}")
-        try:
-            if self._connection and not (self._connection.is_closed):
-                self._connection.close()
-            else:
-                LOGGER.info(f"Connection already closed for {self._queue}")
-        except pika.exceptions.ConnectionWrongStateError as e:
-            LOGGER.warning(f"Connection already in closed state for {self._queue}: {str(e)}")
-        except Exception as e:
-            LOGGER.error(f"Error closing connection for {self._queue}: {str(e)}")
-
     async def shutdown(self):
         LOGGER.info(f"Shutting down consumer for {self._queue}")
         try:
             if self._channel:
                 self.stop_consuming()
-
-            if self._connection and not (
-                self._connection.is_closing or self._connection.is_closed
-            ):
-                self.close_connection()
-        except pika.exceptions.ConnectionWrongStateError as e:
-            LOGGER.warning(f"Connection already closed for {self._queue}: {str(e)}")
         except Exception as e:
             LOGGER.error(f"Error during shutdown for {self._queue}: {str(e)}")
         finally:
             self._channel = None
-            self._connection = None
             self._consumer_tag = None
