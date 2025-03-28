@@ -6,8 +6,10 @@ from APIs.AdventOfCodeAPI import AdventOfCodeAPI
 from APIs.SweccAPI import SweccAPI
 import os
 from dotenv import load_dotenv
+from mq.events import AttendanceEvent, CohortStatsUpdate
 from .utils import handle_cohort_stat_update, is_valid_school_email
 from typing import Optional
+import mq.producers
 
 useless = UselessAPIs()
 calendar = CalendarAPI()
@@ -191,6 +193,9 @@ async def next_meeting(ctx: discord.Interaction):
 
 async def attend(ctx: discord.Interaction, session_key: str):
     status, data = await swecc_api.attend_event(ctx.user.id, session_key)
+    await mq.producers.publish_attend_event(
+        AttendanceEvent(discord_id=ctx.user.id, session_key=session_key)
+    )
 
     if status == 201:
         embed = discord.Embed(
@@ -279,8 +284,12 @@ async def cohort(ctx: discord.Interaction, show_all: bool = False):
 
 @app_commands.describe(cohort_name="The cohort name (optional)")
 async def daily_check(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    stat_url = "dailycheck"
     data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, "dailycheck", cohort_name
+        ctx.user.id, stat_url, cohort_name
+    )
+    await mq.producers.publish_cohort_stats_update_event(
+        CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
     )
 
     await handle_cohort_stat_update(
@@ -297,7 +306,11 @@ async def daily_check(ctx: discord.Interaction, cohort_name: Optional[str] = Non
 async def online_assessment(
     ctx: discord.Interaction, cohort_name: Optional[str] = None
 ):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "oa", cohort_name)
+    stat_url = "oa"
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, stat_url, cohort_name)
+    await mq.producers.publish_cohort_stats_update_event(
+        CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
+    )
     updated_cohorts = ", ".join(data)
     await handle_cohort_stat_update(
         ctx,
@@ -311,8 +324,13 @@ async def online_assessment(
 
 @app_commands.describe(cohort_name="The cohort name (optional)")
 async def interview(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    stat_url = "interview"
     data, error = await swecc_api.update_cohort_stats(
-        ctx.user.id, "interview", cohort_name
+        ctx.user.id, stat_url, cohort_name=cohort_name
+    )
+
+    await mq.producers.publish_cohort_stats_update_event(
+        CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
     )
 
     updated_cohorts = ", ".join(data)
@@ -329,7 +347,11 @@ async def interview(ctx: discord.Interaction, cohort_name: Optional[str] = None)
 
 @app_commands.describe(cohort_name="The cohort name (optional)")
 async def offer(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+    stat_url = "offer"
     data, error = await swecc_api.update_cohort_stats(ctx.user.id, "offer", cohort_name)
+    await mq.producers.publish_cohort_stats_update_event(
+        CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
+    )
 
     updated_cohorts = ", ".join(data)
 
@@ -345,7 +367,11 @@ async def offer(ctx: discord.Interaction, cohort_name: Optional[str] = None):
 
 @app_commands.describe(cohort_name="The cohort name (optional)")
 async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, "apply", cohort_name)
+    stat_url = "apply"
+    data, error = await swecc_api.update_cohort_stats(ctx.user.id, stat_url=stat_url, cohort_name=cohort_name)
+    await mq.producers.publish_cohort_stats_update_event(
+        CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
+    )
 
     updated_cohorts = ", ".join(data)
 
@@ -357,6 +383,7 @@ async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
         "Application",
         f"Your application was successfully recorded in {updated_cohorts}!",
     )
+
 
 
 @app_commands.describe(email="The UW email to verify. E.g.: [net-id]@uw.edu")

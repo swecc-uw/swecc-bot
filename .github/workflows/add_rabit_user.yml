@@ -1,0 +1,85 @@
+name: Create RabbitMQ User for Bot
+on:
+  workflow_dispatch:
+
+env:
+  CONFIG_NAME: "bot_env"
+  RABBITMQ_SERVICE: "rabbitmq-host"
+
+jobs:
+  create_user:
+    runs-on:
+      group: EC2
+      labels: [self-hosted, deploy]
+    steps:
+      - name: Check if RabbitMQ is running
+        id: check_rabbitmq
+        run: |
+          if docker service ls | grep -q "${{ env.RABBITMQ_SERVICE }}"; then
+            echo "RabbitMQ is running"
+          else
+            echo "Error: RabbitMQ is not running"
+            exit 1
+          fi
+
+      - name: Find container ID
+        id: find_container
+        run: |
+          CONTAINER_ID=$(docker ps --filter "name=${{ env.RABBITMQ_SERVICE }}" --format "{{.ID}}")
+          if [ -z "$CONTAINER_ID" ]; then
+            echo "Error: Could not find running RabbitMQ container"
+            exit 1
+          fi
+
+          echo "CONTAINER_ID=$CONTAINER_ID" >> $GITHUB_ENV
+          echo "Found container: $CONTAINER_ID"
+
+      - name: Prepare environment file
+        run: |
+          if ! docker config ls | grep -q "${{ env.CONFIG_NAME }}"; then
+            echo "Error: Config ${{ env.CONFIG_NAME }} does not exist"
+            exit 1
+          fi
+
+          echo "Parsing environment variables..."
+          docker config inspect ${{ env.CONFIG_NAME }} --pretty | sed -n '/Data:/,$ p' | sed '1d' > env_file.txt
+
+          if ! grep -q "BOT_RABBIT_USER" env_file.txt || ! grep -q "BOT_RABBIT_PASS" env_file.txt || ! grep -q "RABBIT_VHOST" env_file.txt; then
+            echo "Error: Missing required RabbitMQ credentials in config"
+            exit 1
+          fi
+
+          echo "Environment variables parsed successfully"
+
+      - name: Create RabbitMQ user
+        run: |
+          set -o allexport
+          source env_file.txt
+          set +o allexport
+
+          echo "Creating RabbitMQ user..."
+
+          if docker exec $CONTAINER_ID rabbitmqctl list_users | grep -q "${BOT_RABBIT_USER}"; then
+            echo "User ${BOT_RABBIT_USER} already exists, updating password..."
+            docker exec $CONTAINER_ID rabbitmqctl change_password "${BOT_RABBIT_USER}" "${BOT_RABBIT_PASS}"
+          else
+            docker exec $CONTAINER_ID rabbitmqctl add_user "${BOT_RABBIT_USER}" "${BOT_RABBIT_PASS}" || {
+              echo "Error: Failed to create RabbitMQ user"
+              exit 1
+            }
+          fi
+
+          docker exec $CONTAINER_ID rabbitmqctl set_permissions -p "${RABBIT_VHOST}" "${BOT_RABBIT_USER}" ".*" ".*" ".*" || {
+            echo "Error: Failed to set permissions for user"
+            exit 1
+          }
+
+          echo "RabbitMQ user created successfully"
+
+      - name: Clean up sensitive data
+        if: always()
+        run: |
+          if [ -f env_file.txt ]; then
+            rm env_file.txt
+            echo "Removed sensitive environment file"
+          fi
