@@ -1,15 +1,14 @@
+import logging
+from settings.context import BotContext
 import mq
-
+from pika import BasicProperties
 
 @mq.consumer(
-    exchange="message",
-    queue="text",
-    routing_key="example.text",
-    needs_context=True,  # whether the callback needs client/bot_context
+    exchange="swecc-bot-exchange",
+    queue="loopback",
+    routing_key="#",
+    exchange_type=mq.ExchangeType.topic,
+    declare_exchange=False,
 )
-async def consume_discord_message(body, properties, client, context):
-    message = body.decode("utf-8")
-    print(f"Received message: {message}")
-
-    if (channel := client.get_channel(context.admin_channel)) is not None:
-        await channel.send(f"Received message: {message}")
+async def loopback(body, properties: BasicProperties):
+    logging.info(f"Loopback consumer received message: {body}")

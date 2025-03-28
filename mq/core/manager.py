@@ -40,6 +40,7 @@ class RabbitMQManager:
     def register_callback(
         self,
         exchange,
+        declare_exchange,
         queue,
         routing_key,
         exchange_type=ExchangeType.topic,
@@ -54,6 +55,7 @@ class RabbitMQManager:
                 "queue": queue,
                 "routing_key": routing_key,
                 "exchange_type": exchange_type,
+                "declare_exchange": declare_exchange,
                 "needs_context": needs_context,
             }
 
@@ -136,6 +138,7 @@ class RabbitMQManager:
                 queue=config["queue"],
                 routing_key=config["routing_key"],
                 exchange_type=config["exchange_type"],
+                declare_exchange=config["declare_exchange"],
             )
 
     def add_consumer(
@@ -143,6 +146,7 @@ class RabbitMQManager:
         name: str,
         callback: Callable[[bytes, Any], Coroutine],
         exchange: str,
+        declare_exchange: bool,
         queue: str,
         routing_key: str,
         exchange_type: ExchangeType = ExchangeType.topic,
@@ -162,6 +166,7 @@ class RabbitMQManager:
             routing_key=routing_key,
             callback=callback,
             prefetch_count=prefetch_count,
+            declare_exchange=declare_exchange
         )
 
         self.consumers[name] = consumer

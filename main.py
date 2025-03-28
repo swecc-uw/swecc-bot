@@ -13,6 +13,8 @@ import asyncio
 from tasks.index import start_daily_tasks
 import admin.filter as filter
 import mq
+import mq.producers
+from mq.events import DiscordEventType, MessageEvent, ReactionEvent
 
 load_dotenv()
 
@@ -57,7 +59,11 @@ async def on_message(message):
     if member == client.user:
         return
     
-    await mq.producers.publish_discord_message(message.content)
+    await mq.producers.publish_message_event(MessageEvent(
+        discord_id=member.id,
+        channel_id=message.channel.id,
+        content=message.content
+    ))
     await filter.filter_message(message, bot_context)
     await swecc.process_message_event(message)
     await gemini.process_message_event(message)
@@ -86,11 +92,26 @@ async def on_thread_create(thread):
 @client.event
 async def on_raw_reaction_add(payload):
     await swecc.process_reaction_event(payload, "REACTION_ADD")
-
+    await mq.producers.publish_reaction_add_event(ReactionEvent(
+        discord_id=payload.user_id,
+        channel_id=payload.channel_id,
+        message_id=payload.message_id,
+        emoji=payload.emoji.name,
+        event_type=DiscordEventType.REACTION_ADD
+    ))
 
 @client.event
 async def on_raw_reaction_remove(payload):
     await swecc.process_reaction_event(payload, "REACTION_REMOVE")
+    await mq.producers.publish_reaction_remove_event(
+        ReactionEvent(
+            discord_id=payload.user_id,
+            channel_id=payload.channel_id,
+            message_id=payload.message_id,
+            emoji=payload.emoji.name,
+            event_type=DiscordEventType.REACTION_REMOVE,
+        )
+    )
 
 misc.setup(client, bot_context)
 auth.setup(client, bot_context)

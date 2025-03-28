@@ -1,6 +1,5 @@
 import logging
 from typing import Callable
-from discord.ext import commands
 from pika.exchange_type import ExchangeType
 from mq.core.manager import RabbitMQManager
 
@@ -8,19 +7,25 @@ LOGGER = logging.getLogger(__name__)
 
 _manager = RabbitMQManager()
 
+DEFAULT_EXCHANGE = "swecc-bot-exchange"
 
 def consumer(
-    exchange, queue, routing_key, exchange_type=ExchangeType.topic, needs_context=False
-):
+    queue, routing_key, exchange=DEFAULT_EXCHANGE,  exchange_type=ExchangeType.topic, needs_context=False, declare_exchange=True
+) -> Callable:
     """decorator for registering consumers"""
     return _manager.register_callback(
-        exchange, queue, routing_key, exchange_type, needs_context
+        exchange,
+        declare_exchange,
+        queue,
+        routing_key,
+        exchange_type,
+        needs_context
     )
 
 
 def producer(
-    exchange, exchange_type=ExchangeType.topic, routing_key=None, needs_context=False
-):
+    exchange=DEFAULT_EXCHANGE, exchange_type=ExchangeType.topic, declare_exchange=True, routing_key=None, needs_context=False
+) -> Callable:
     """decorator for registering producers"""
     return _manager.register_producer(
         exchange, exchange_type, routing_key, needs_context
@@ -53,7 +58,7 @@ def setup(bot, bot_context):
     async def wrapped_setup_hook():
         if bot_setup_hook:
             if callable(bot_setup_hook):
-                await bot_setup_hook()
+                await bot_setup_hook() # type: ignore
 
         await initialize_rabbitmq(bot)
 

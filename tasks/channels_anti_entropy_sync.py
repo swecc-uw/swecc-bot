@@ -4,8 +4,10 @@ import datetime
 from discord.ext import tasks
 from APIs.SweccAPI import SweccAPI
 import dotenv
-
 import logging
+
+from mq.events import ChannelSnapshot
+import mq.producers
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
@@ -24,19 +26,21 @@ ALLOWED_CHANNEL_TYPES = [
 ]
 
 async def sync(guild):
+    channels = [
+        {
+            "channel_id": channel.id,
+            "channel_name": channel.name,
+            "category_id": channel.category_id,
+            "channel_type": channel.type[0].upper(),
+            "guild_id": guild.id,
+        }
+        for channel in guild.channels
+        if any(isinstance(channel, channel_type) for channel_type in ALLOWED_CHANNEL_TYPES)
+    ]
     await swecc_api.sync_channels(
-        [
-            {
-                "channel_id": channel.id,
-                "channel_name": channel.name,
-                "category_id": channel.category_id,
-                "channel_type": channel.type[0].upper(),
-                "guild_id": guild.id,
-            }
-            for channel in guild.channels
-            if any(isinstance(channel, channel_type) for channel_type in ALLOWED_CHANNEL_TYPES)
-        ]
+        channels=channels,
     )
+    await mq.producers.publish_channel_snapshot(ChannelSnapshot(channels=channels))
 
 
 SWECC_SERVER_ID = int(os.getenv("SWECC_SERVER"))
