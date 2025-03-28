@@ -89,12 +89,14 @@ class AsyncRabbitProducer:
 
     def setup_exchange(self):
         LOGGER.info(f"Declaring exchange: {self._exchange}")
-        assert self._channel
-        self._channel.exchange_declare(
-            exchange=self._exchange,
-            exchange_type=self._exchange_type,
-            callback=self.on_exchange_declareok,
-        )
+        if self._channel:
+            self._channel.exchange_declare(
+                exchange=self._exchange,
+                exchange_type=self._exchange_type,
+                callback=self.on_exchange_declareok,
+            )
+        else:
+            LOGGER.warning(f"Channel is not open for exchange declaration: {self._exchange}")
 
     def on_exchange_declareok(self, _unused_frame):
         LOGGER.info(f"Exchange declared: {self._exchange}")

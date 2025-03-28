@@ -7,7 +7,6 @@ from pika import BasicProperties
     exchange="swecc-bot-exchange",
     queue="loopback",
     routing_key="#",
-    exchange_type=mq.ExchangeType.topic,
     declare_exchange=False,
 )
 async def loopback(body, properties: BasicProperties):
