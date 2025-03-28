@@ -6,7 +6,7 @@ from APIs.AdventOfCodeAPI import AdventOfCodeAPI
 from APIs.SweccAPI import SweccAPI
 import os
 from dotenv import load_dotenv
-from .utils import handle_cohort_stat_update
+from .utils import handle_cohort_stat_update, is_valid_school_email
 from typing import Optional
 
 useless = UselessAPIs()
@@ -294,7 +294,9 @@ async def daily_check(ctx: discord.Interaction, cohort_name: Optional[str] = Non
 
 
 @app_commands.describe(cohort_name="The cohort name (optional)")
-async def online_assessment(ctx: discord.Interaction, cohort_name: Optional[str] = None):
+async def online_assessment(
+    ctx: discord.Interaction, cohort_name: Optional[str] = None
+):
     data, error = await swecc_api.update_cohort_stats(ctx.user.id, "oa", cohort_name)
     updated_cohorts = ", ".join(data)
     await handle_cohort_stat_update(
@@ -356,6 +358,50 @@ async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
         f"Your application was successfully recorded in {updated_cohorts}!",
     )
 
+
+@app_commands.describe(email="The UW email to verify. E.g.: [net-id]@uw.edu")
+async def request_verify_school_email(ctx: discord.Interaction, email: str):
+
+    if not is_valid_school_email(email):
+        embed = discord.Embed(
+            title="Invalid Email",
+            description="Please use your UW email address to verify.",
+            color=discord.Color.red(),
+        )
+
+        await ctx.response.send_message(
+            embed=embed,
+            ephemeral=bot_context.ephemeral,
+        )
+        return
+
+    data = await swecc_api.get_school_email_verification_url(ctx.user.id, email)
+
+    if not data:
+        embed = discord.Embed(
+            title="Error",
+            description="An error occurred while processing your request. Please try again later.",
+            color=discord.Color.red(),
+        )
+
+        await ctx.response.send_message(
+            embed=embed,
+            ephemeral=bot_context.ephemeral,
+        )
+        return
+
+    embed = discord.Embed(
+        title="Success!",
+        description=f"An email has been sent to {email} with a verification link.",
+        color=discord.Color.green(),
+    )
+
+    await ctx.response.send_message(
+        embed=embed,
+        ephemeral=bot_context.ephemeral,
+    )
+
+
 def setup(client, context):
     global bot_context
     bot_context = context
@@ -377,3 +423,4 @@ def setup(client, context):
     client.tree.command(name="offer")(offer)
     client.tree.command(name="application")(apply)
     client.tree.command(name="cohort")(cohort)
+    client.tree.command(name="verify_school_email")(request_verify_school_email)
