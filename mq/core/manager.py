@@ -223,6 +223,7 @@ class RabbitMQManager:
                             await ConnectionManager().connect(loop=bot.loop)
                         except Exception as e:
                             LOGGER.error(f"Failed to reconnect: {str(e)}")
+                            await asyncio.sleep(20)
                             continue
 
                     for name, consumer in list(self.consumers.items()):
