@@ -46,7 +46,7 @@ class AsyncRabbitConsumer:
         )
 
         try:
-            self._connection = await ConnectionManager().connect(loop=loop)
+            self._connection = await ConnectionManager(loop=loop).connect(loop=loop)
         except Exception as e:
             LOGGER.error(f"Failed to create connection for {self._queue}: {str(e)}")
             self._connection = None

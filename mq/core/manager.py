@@ -77,8 +77,9 @@ class RabbitMQManager:
             async def producer_factory(
                 message, routing_key_override=None, properties=None
             ):
+                loop = asyncio.get_event_loop()
                 producer = self.get_or_create_producer(
-                    producer_name, exchange, exchange_type, routing_key
+                    producer_name, exchange, exchange_type, routing_key, loop=loop
                 )
 
                 if needs_context:
@@ -104,13 +105,16 @@ class RabbitMQManager:
 
         return decorator
 
-    def get_or_create_producer(self, name, exchange, exchange_type, routing_key=None):
+    def get_or_create_producer(
+        self, name, exchange, exchange_type, routing_key=None, loop=None
+    ):
         if name not in self.producers:
             producer = AsyncRabbitProducer(
                 amqp_url=self.default_amqp_url,
                 exchange=exchange,
                 exchange_type=exchange_type,
                 routing_key=routing_key,
+                loop=loop,
             )
             self.producers[name] = producer
 
@@ -215,12 +219,14 @@ class RabbitMQManager:
             while True:
                 try:
 
-                    if not ConnectionManager().is_connected():
+                    if not ConnectionManager(loop=bot.loop).is_connected():
                         LOGGER.warning(
                             "RabbitMQ connection lost, attempting to reconnect"
                         )
                         try:
-                            await ConnectionManager().connect(loop=bot.loop)
+                            await ConnectionManager(loop=bot.loop).connect(
+                                loop=bot.loop
+                            )
                         except Exception as e:
                             LOGGER.error(f"Failed to reconnect: {str(e)}")
                             await asyncio.sleep(20)
