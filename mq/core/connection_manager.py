@@ -24,8 +24,9 @@ class ConnectionManager:
         self._loop = None
         self._url = self._build_amqp_url()
         self.initialized = True
+        self._loop = loop
 
-    async def connect(self, loop=None):
+    async def connect(self):
         logger.info(f"Connecting to {self._url}.")
 
         try:
@@ -42,7 +43,7 @@ class ConnectionManager:
                 on_open_callback=self.on_connection_open,
                 on_open_error_callback=self.on_connection_open_error,
                 on_close_callback=self.on_connection_closed,
-                custom_ioloop=loop,
+                custom_ioloop=self._loop,
             )
 
             await self._ready.wait()

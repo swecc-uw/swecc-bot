@@ -186,6 +186,8 @@ class RabbitMQManager:
     async def stop_all(self):
         await self.stop_consumers()
         await self.stop_producers()
+        # No need to specify `loop` here, as ConnectionManager is already initialized
+        # and will use the same loop.
         await ConnectionManager().close()
 
     async def stop_consumers(self):
@@ -224,9 +226,7 @@ class RabbitMQManager:
                             "RabbitMQ connection lost, attempting to reconnect"
                         )
                         try:
-                            await ConnectionManager(loop=bot.loop).connect(
-                                loop=bot.loop
-                            )
+                            await ConnectionManager(loop=bot.loop).connect()
                         except Exception as e:
                             LOGGER.error(f"Failed to reconnect: {str(e)}")
                             await asyncio.sleep(20)

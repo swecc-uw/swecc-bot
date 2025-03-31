@@ -32,9 +32,7 @@ class AsyncRabbitProducer:
 
         self._ready.clear()
 
-        self._connection = await ConnectionManager(loop=loop).connect(
-            loop=loop or asyncio.get_event_loop()
-        )
+        self._connection = await ConnectionManager(loop=loop).connect()
 
         LOGGER.info(f"Producer connecting to {self._url} for exchange {self._exchange}")
         if not self._connection:
