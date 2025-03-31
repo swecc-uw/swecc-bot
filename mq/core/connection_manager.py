@@ -12,20 +12,21 @@ logger = logging.getLogger(__name__)
 class ConnectionManager:
     instance = None
 
-    def __init__(self):
+    def __init__(self, loop=None):
 
         if ConnectionManager.instance.initialized:
             return
 
         self._connection = None
         self._closing = False
-        self._ready = asyncio.Event()
+        self._ready = asyncio.Event(loop=loop)
         self._connected = False
         self._loop = None
         self._url = self._build_amqp_url()
         self.initialized = True
+        self._loop = loop
 
-    async def connect(self, loop=None):
+    async def connect(self):
         logger.info(f"Connecting to {self._url}.")
 
         try:
@@ -42,7 +43,7 @@ class ConnectionManager:
                 on_open_callback=self.on_connection_open,
                 on_open_error_callback=self.on_connection_open_error,
                 on_close_callback=self.on_connection_closed,
-                custom_ioloop=loop,
+                custom_ioloop=self._loop,
             )
 
             await self._ready.wait()
@@ -92,7 +93,7 @@ class ConnectionManager:
     def is_connected(self):
         return self._connected
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if cls.instance is None:
             cls.instance = super(ConnectionManager, cls).__new__(cls)
             cls.instance.initialized = False

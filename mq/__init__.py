@@ -83,7 +83,7 @@ def setup(bot, bot_context):
 async def initialize_rabbitmq(bot):
     global _manager
 
-    await ConnectionManager().connect(loop=bot.loop)
+    await ConnectionManager(loop=bot.loop).connect()
 
     _manager.create_consumers()
 
