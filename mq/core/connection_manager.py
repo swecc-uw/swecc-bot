@@ -92,7 +92,7 @@ class ConnectionManager:
     def is_connected(self):
         return self._connected
 
-    def __new__(cls, loop=None):
+    def __new__(cls, *args, **kwargs):
         if cls.instance is None:
             cls.instance = super(ConnectionManager, cls).__new__(cls)
             cls.instance.initialized = False
