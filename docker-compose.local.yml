@@ -29,6 +29,7 @@ services:
       - OFFICER_ROLE_ID=${OFFICER_ROLE_ID}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - VERIFIED_ROLE_ID=${VERIFIED_ROLE_ID}
+      - VERIFIED_EMAIL_ROLE_ID=${VERIFIED_EMAIL_ROLE_ID}
 
 networks:
   swecc-default:
