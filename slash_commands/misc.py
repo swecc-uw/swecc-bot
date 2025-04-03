@@ -307,7 +307,9 @@ async def online_assessment(
     ctx: discord.Interaction, cohort_name: Optional[str] = None
 ):
     stat_url = "oa"
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, stat_url, cohort_name)
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, stat_url, cohort_name
+    )
     await mq.producers.publish_cohort_stats_update_event(
         CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
     )
@@ -368,7 +370,9 @@ async def offer(ctx: discord.Interaction, cohort_name: Optional[str] = None):
 @app_commands.describe(cohort_name="The cohort name (optional)")
 async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
     stat_url = "apply"
-    data, error = await swecc_api.update_cohort_stats(ctx.user.id, stat_url=stat_url, cohort_name=cohort_name)
+    data, error = await swecc_api.update_cohort_stats(
+        ctx.user.id, stat_url=stat_url, cohort_name=cohort_name
+    )
     await mq.producers.publish_cohort_stats_update_event(
         CohortStatsUpdate(ctx.user.id, stat_url, cohort_name=cohort_name)
     )
@@ -383,7 +387,6 @@ async def apply(ctx: discord.Interaction, cohort_name: Optional[str] = None):
         "Application",
         f"Your application was successfully recorded in {updated_cohorts}!",
     )
-
 
 
 @app_commands.describe(email="The UW email to verify. E.g.: [net-id]@uw.edu")
@@ -402,6 +405,8 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
         )
         return
 
+    await ctx.response.defer(ephemeral=bot_context.ephemeral)
+
     data = await swecc_api.get_school_email_verification_url(ctx.user.id, email)
 
     if not data:
@@ -411,7 +416,7 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
             color=discord.Color.red(),
         )
 
-        await ctx.response.send_message(
+        await ctx.followup.send(
             embed=embed,
             ephemeral=bot_context.ephemeral,
         )
@@ -423,7 +428,7 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
         color=discord.Color.green(),
     )
 
-    await ctx.response.send_message(
+    await ctx.followup.send(
         embed=embed,
         ephemeral=bot_context.ephemeral,
     )
