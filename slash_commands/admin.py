@@ -1,4 +1,5 @@
 import logging
+from .utils import slugify
 import discord
 from APIs.SweccAPI import SweccAPI
 
@@ -35,7 +36,7 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
         channel = None if channel_id is None else guild.get_channel(channel_id)
         role = None if role_id is None else guild.get_role(role_id)
 
-        w = {
+        write = {
             "id": cohort["id"],
             "discord_channel_id": channel_id,
             "discord_role_id": role_id,
@@ -48,14 +49,14 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
                 topic=f"{cohort['name']}",
                 reason="Cohort channel created by bot.",
             )
-            w["discord_channel_id"] = channel.id
+            write["discord_channel_id"] = channel.id
             msg.append(f"Created channel {channel.mention} for cohort {cohort['name']}")
         else:
             existing_channel_name = channel.name
-
-            if existing_channel_name != cohort["name"].lower().replace(" ", "-").replace("'", ""):
-                await channel.edit(name=cohort["name"].lower().replace(" ", "-").replace("'", ""), reason="Cohort channel name updated by bot.")
-                msg.append(f"Updated channel {channel.mention} to {cohort['name']}")
+            slug = slugify(cohort["name"])
+            if existing_channel_name != slug:
+                await channel.edit(name=slug, reason="Cohort channel name updated by bot.")
+                msg.append(f"Updated channel {channel.mention} to {slug} for cohort {cohort['name']}")
             else:
                 msg.append(f"Channel {channel.mention} already exists for cohort {cohort['name']}")
 
@@ -65,7 +66,7 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
                 reason="Cohort role created by bot.",
                 mentionable=True
             )
-            w["discord_role_id"] = role.id
+            write["discord_role_id"] = role.id
             msg.append(f"Created role {role.name} for cohort {cohort['name']}")
         else:
             existing_role_name = role.name
@@ -76,7 +77,7 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
             else:
                 msg.append(f"Role {role.name} already exists for cohort {cohort['name']}")
         if channel_id is None or role_id is None:
-            writes.append(w)
+            writes.append(write)
 
         # add perms to channel
         await channel.set_permissions(role, read_messages=True, send_messages=True)
