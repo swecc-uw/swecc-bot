@@ -14,7 +14,7 @@ async def set_ephemeral(ctx: discord.Interaction):
 
 async def sync_cohort_channels(ctx: discord.Interaction) -> None:
 
-    ctx.response.defer(ephemeral=bot_context.ephemeral)
+    await ctx.response.defer(ephemeral=True)
 
     category_id = bot_context.cohort_category_id
 
@@ -78,8 +78,21 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
         if channel_id is None or role_id is None:
             writes.append(w)
 
+        # add perms to channel
+        await channel.set_permissions(role, read_messages=True, send_messages=True)
+
+        # add members to role
+        for discord_id in cohort["discord_member_ids"]:
+            member = guild.get_member(discord_id)
+            if member is not None:
+                await member.add_roles(role, reason="Cohort role added by bot.")
+                msg.append(f"Added {member.mention} to role {role.name} for cohort {cohort['name']}")
+            else:
+                msg.append(f"Member {discord_id} not found in guild for cohort {cohort['name']}")
+
+
     if msg:
-        await ctx.response.send_message("\n".join(msg), ephemeral=bot_context.ephemeral)
+        await bot_context.log(ctx, "\n".join(msg))
 
     await swecc.upload_cohort_metadata(writes)
 
