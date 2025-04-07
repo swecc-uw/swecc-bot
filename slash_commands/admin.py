@@ -54,7 +54,7 @@ async def sync_cohort_channels(ctx: discord.Interaction) -> None:
             existing_channel_name = channel.name
 
             if existing_channel_name != cohort["name"].lower().replace(" ", "-").replace("'", ""):
-                await channel.edit(name=cohort["name"], reason="Cohort channel name updated by bot.")
+                await channel.edit(name=cohort["name"].lower().replace(" ", "-").replace("'", ""), reason="Cohort channel name updated by bot.")
                 msg.append(f"Updated channel {channel.mention} to {cohort['name']}")
             else:
                 msg.append(f"Channel {channel.mention} already exists for cohort {cohort['name']}")
