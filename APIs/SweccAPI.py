@@ -357,5 +357,5 @@ class SweccAPI:
                 logger.info("Received cohort metadata: %s", data)
                 return data
         except Exception as e:
-            logging.error("Failed to get cohort metadata: %s", e)
+            logging.error("Failed to upload cohort metadata: %s", e)
             return None
