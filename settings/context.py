@@ -12,6 +12,8 @@ class BotContext:
         self.resume_channel = int(os.getenv("SWECC_RESUME_CHANNEL"))
         self.reading_group_channel = int(os.getenv("READING_GROUP_CHANNEL"))
 
+        self.cohort_category_id = int(os.getenv("COHORT_CATEGORY_ID"))
+
         self.verified_role_id = int(os.getenv("VERIFIED_ROLE_ID"))
         self.officer_role_id = int(os.getenv("OFFICER_ROLE_ID"))
         self.verified_email_role_id = int(os.getenv("VERIFIED_EMAIL_ROLE_ID"))

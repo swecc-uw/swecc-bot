@@ -313,3 +313,49 @@ class SweccAPI:
         except Exception as e:
             logging.error("Failed to get verification URL: %s", e)
             return False
+
+    async def get_cohort_metadata(self):
+        session = self.get_session()
+
+        try:
+            async with session.get(
+                f"{self.url}/cohorts/sync/discord/", headers=self.headers
+            ) as response:
+                if response.status != 200:
+                    logging.error(
+                        "Failed to get cohort metadata, status code: %s, json: %s",
+                        response.status,
+                        await response.json(),
+                    )
+                    return None
+
+                data = await response.json()
+                logger.info("Received cohort metadata: %s", data)
+                return data
+        except Exception as e:
+            logging.error("Failed to get cohort metadata: %s", e)
+            return None
+
+    async def upload_cohort_metadata(self, data):
+        session = self.get_session()
+        logging.info("Uploading cohort metadata: %s", data)
+        try:
+            async with session.post(
+                f"{self.url}/cohorts/sync/discord/",
+                headers=self.headers,
+                json=data,
+            ) as response:
+                if response.status != 200:
+                    logging.error(
+                        "Failed to upload cohort metadata, status code: %s, json: %s",
+                        response.status,
+                        await response.json(),
+                    )
+                    return None
+
+                data = await response.json()
+                logger.info("Received cohort metadata: %s", data)
+                return data
+        except Exception as e:
+            logging.error("Failed to upload cohort metadata: %s", e)
+            return None
