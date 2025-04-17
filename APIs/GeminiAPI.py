@@ -1,13 +1,9 @@
 import os, logging
-from google import genai
-from google.genai import types
 import re
 from dataclasses import dataclass, asdict
-from datetime import datetime
-from collections import deque
-import aiohttp
 import requests
 from time import sleep
+from typing import Optional
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
@@ -15,8 +11,8 @@ logging.basicConfig(
 
 @dataclass(frozen=True)
 class Metadata:
-    is_authorized: bool
-    author: str
+    is_authorized: Optional[bool]
+    author: Optional[str]
 
 class GeminiAPI:
 
@@ -195,7 +191,7 @@ class GeminiAPI:
             always reach you in <#{self.OFF_TOPIC_CHANNEL_ID}> if they have any questions or
             need help with anything.
             """,
-            {},
+            Metadata(),
             self.welcome_message_key
         )
 
