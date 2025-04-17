@@ -115,6 +115,7 @@ class GeminiAPI:
             
     def poll_for_response(self, request_id):
         tries = 0
+        failed_response_message = "Request failed. Please try again later."
         while tries < self.max_tries:
             with self.session.get(f"{self.url}/inference/status/{request_id}") as response:
                 if response.status_code == 200:
@@ -131,6 +132,7 @@ class GeminiAPI:
                         logging.info("Response is still pending...")
                     elif status == "error":
                         logging.error("Error in response.")
+                        failed_response_message = "Error occurred Please try again later."
                         break
                     elif status == "in_progress":
                         logging.info("Response is in-progress")
@@ -143,7 +145,7 @@ class GeminiAPI:
                     break
             tries += 1
             sleep(self.polling_interval)
-        return "Request timed out. Please try again later."
+        return failed_response_message
 
     async def process_message_event(self, message):
         # Idempotent, no problem calling multiple times 
