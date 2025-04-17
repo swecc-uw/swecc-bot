@@ -101,10 +101,11 @@ class GeminiAPI:
             response = response[:1997] + "..."
         return re.sub(self.BUTLER_MESSAGE_PREFIX, "", response, 1).strip()
     
-    def request_completion(self, message, metadata: Metadata, key):
+    def request_completion(self, message, metadata: Metadata, key, needs_context=True):
         with self.session.post(f"{self.url}/inference/{key}/complete", json={
             "message": message,
             "metadata": asdict(metadata),
+            "needs_context": needs_context,
         }) as response:
             if response.status_code == 202:
                 logging.info(f"response: {response.json()}")
@@ -194,7 +195,8 @@ class GeminiAPI:
             need help with anything.
             """,
             Metadata(),
-            self.welcome_message_key
+            self.welcome_message_key,
+            needs_context=False
         )
 
         response = self.poll_for_response(request_id)
