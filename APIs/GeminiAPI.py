@@ -101,7 +101,7 @@ class GeminiAPI:
             response = response[:1997] + "..."
         return re.sub(self.BUTLER_MESSAGE_PREFIX, "", response, 1).strip()
     
-    async def request_completion(self, message, metadata: Metadata, key):
+    def request_completion(self, message, metadata: Metadata, key):
         with self.session.post(f"{self.url}/inference/{key}/complete", json={
             "message": message,
             "metadata": asdict(metadata),
@@ -113,7 +113,7 @@ class GeminiAPI:
                 logging.error(f"Failed to get completion: {response.text}")
                 return None
             
-    async def poll_for_response(self, request_id):
+    def poll_for_response(self, request_id):
         tries = 0
         while tries < self.max_tries:
             with self.session.get(f"{self.url}/inference/status/{request_id}") as response:
@@ -159,26 +159,26 @@ class GeminiAPI:
             return
         
         metadata = Metadata(
-            is_authorized=not is_authorized,
+            is_authorized=is_authorized,
             author=str(message.author),
         )
         
         cleaned_message = self.format_user_message(message)
 
-        request_id = await self.request_completion(
+        request_id = self.request_completion(
             cleaned_message,
             metadata,
             self.config_key
         )
 
-        response = await self.poll_for_response(request_id)
+        response = self.poll_for_response(request_id)
 
         await message.channel.send(response)
 
     async def get_welcome_message(self, username, discord_id):
         self.initialize_welcome_message_config()
 
-        request_id = await self.request_completion(
+        request_id = self.request_completion(
             f"""
             {self.ROLE}
 
@@ -195,5 +195,5 @@ class GeminiAPI:
             self.welcome_message_key
         )
 
-        response = await self.poll_for_response(request_id)
+        response = self.poll_for_response(request_id)
         return response
