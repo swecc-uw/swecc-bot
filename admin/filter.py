@@ -32,6 +32,6 @@ async def filter_message(message, bot_context):
                         
                         view = TimeoutActionView(member, bot_context)
                         channel = message.guild.get_channel(bot_context.transcripts_channel)
-                        await channel.send(log_message)
+                        await channel.send(log_message, allowed_mentions=discord.AllowedMentions.none)
                         await channel.send("How should we handle it?", view=view)
                         break
