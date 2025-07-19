@@ -1,7 +1,5 @@
 import discord
-import os
 import secrets
-import json
 from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
