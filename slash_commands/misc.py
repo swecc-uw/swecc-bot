@@ -18,6 +18,39 @@ swecc_api = SweccAPI()
 
 LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
 
+async def bold_tech_stack(ctx: discord.Interaction):
+    message = (
+        "Bold key parts of each experience so important details stand out — usually the tech stack or a standout metric. "
+        "This draws attention without overloading your resume, keeping the focus on the most relevant skills.\n\n"
+        "Example:\n"
+        "- 'Designed a ticketing dashboard in **React** and **Node.js**, reducing support resolution time by 28%.'"
+
+    )
+    await ctx.response.send_message(message)
+
+
+async def reverse_chronological(ctx: discord.Interaction):
+    message = (
+        "List your experiences in reverse chronological order — most recent first — so recruiters can quickly see your latest work. "
+        "This is the standard format used in most resumes and avoids confusion when reviewing timelines.\n\n"
+        "Example:\n"
+        "Jun 2025 - Present : Software Engineering Intern, CompanyName\n"
+        "Jan 2025 - May 2025 : Software Engineering Intern, CompanyName\n"
+        "May 2024 - Aug 2024 : Research Assistant, LabName\n\n"
+        "Even if you want to showcase older experiences, keeping everything in reverse chronological order makes it easier for recruiters to follow your career progression."
+    )
+    await ctx.response.send_message(message)
+
+
+async def jakes_resume(ctx: discord.Interaction):
+    message = (
+        "Switch to Jake’s Resume format for a cleaner layout that’s easy for recruiters and ATS to scan: "
+        "https://www.overleaf.com/latex/templates/jakes-resume/syzfjbzwjncs. "
+
+        "\n\n If you use your UW email, you also get access to the student version of Overleaf for free."
+    )
+    await ctx.response.send_message(message)
+
 
 async def google_xyz(ctx: discord.Interaction):
     message = (
@@ -440,6 +473,9 @@ def setup(client, context):
 
     client.tree.command(name="say_hi")(say_hi)
     client.tree.command(name="xyz")(google_xyz)
+    client.tree.command(name="jakes")(jakes_resume)
+    client.tree.command(name="reverse_order")(reverse_chronological)
+    client.tree.command(name="bold")(bold_tech_stack)
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
