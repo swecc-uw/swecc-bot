@@ -18,7 +18,7 @@ swecc_api = SweccAPI()
 
 LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
 
-async def bold_tech_stack(ctx: discord.Interaction):
+async def bold_key_parts(ctx: discord.Interaction):
     message = (
         "Bold key parts of each experience so important details stand out — usually the tech stack or a standout metric. "
         "This draws attention without overloading your resume, keeping the focus on the most relevant skills.\n\n"
@@ -475,7 +475,7 @@ def setup(client, context):
     client.tree.command(name="xyz")(google_xyz)
     client.tree.command(name="jakes")(jakes_resume)
     client.tree.command(name="reverse_order")(reverse_chronological)
-    client.tree.command(name="bold")(bold_tech_stack)
+    client.tree.command(name="bold")(bold_key_parts)
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
