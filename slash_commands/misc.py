@@ -151,7 +151,9 @@ async def leetcode_leaderboard(ctx: discord.Interaction, order: str = "total"):
         medals = ["🥇", "🥈", "🥉"] + [""] * 7
         leaderboard_text = [
             f"{medals[i]}{f'**#{i+1}**' if i > 2 else ''} "
-            f"[**{user['user']['username']}**](https://leetcode.com/{user['user']['username']})\n"
+            username = user['user']['username']
+            encoded_username = username.replace(" ", "%20")
+            f"[**{username}**](https://leetcode.com/{encoded_username})\n"
             f"└─ 🔢 Total: {user['total_solved']} | "
             f"🟢 Easy: {user['easy_solved']} | "
             f"🟡 Med: {user['medium_solved']} | "
@@ -488,7 +490,7 @@ def setup(client, context):
     client.tree.command(name="jakes")(jakes_resume)
     client.tree.command(name="reverse_order")(reverse_chronological)
     client.tree.command(name="bold")(bold_key_parts)
-    client.tree.command(name="splitrole")(split_company_role)
+    client.tree.command(name="split_role")(split_company_role)
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
