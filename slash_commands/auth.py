@@ -1,9 +1,9 @@
 import discord
-import os
 import secrets
 from APIs.SweccAPI import SweccAPI
 
 swecc = SweccAPI()
+
 
 class RegisterModal(discord.ui.Modal, title="Register Your Account"):
     def __init__(self, bot_context, verified_role):
@@ -55,12 +55,7 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
         password = secrets.token_urlsafe(32)
 
         status, response = swecc.register(
-            username,
-            first_name,
-            last_name,
-            email,
-            password,
-            discord_username
+            username, first_name, last_name, email, password, discord_username
         )
 
         if status == 201:
@@ -69,7 +64,7 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
             (id, reset_password_url, detail) = (
                 response["id"],
                 response["reset_password_url"],
-                response["detail"]
+                response["detail"],
             )
 
             if auth_response == 200:
@@ -87,7 +82,11 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
                 await interaction.response.send_message(usr_msg, ephemeral=True)
                 await self.bot_context.log(interaction, sys_msg)
         else:
-            usr_msg = f"Registration failed. Please try again. Error: {status}"
+            error_message = response.get(
+                "detail",
+                "Internal server error. Please try again later, or contact one of the officers.",
+            )
+            usr_msg = f"Registration failed. Please try again. Error: {error_message}"
             sys_msg = f"{interaction.user.display_name} has failed to register an account with status {status}. - {response}."
 
             await interaction.response.send_message(usr_msg, ephemeral=True)
@@ -96,19 +95,21 @@ class RegisterModal(discord.ui.Modal, title="Register Your Account"):
     async def on_error(self, interaction: discord.Interaction, error: Exception):
         if not interaction.response.is_done():
             await interaction.response.send_message(
-                f"Something went wrong during registration: {error}",
-                ephemeral=True
+                f"Something went wrong during registration: {error}", ephemeral=True
             )
             await self.bot_context.log(
                 interaction,
-                f"{interaction.user.display_name} has failed to register an account. - {error}"
+                f"{interaction.user.display_name} has failed to register an account. - {error}",
             )
+
 
 async def register(ctx: discord.Interaction):
     verified_rid = bot_context.verified_role_id
     if (role := ctx.guild.get_role(verified_rid)) and role in ctx.user.roles:
         usr_msg = f"You are already verified"
-        sys_msg = f"{ctx.user.display_name} has tried to register but is already verified."
+        sys_msg = (
+            f"{ctx.user.display_name} has tried to register but is already verified."
+        )
 
         await ctx.response.send_message(usr_msg, ephemeral=True)
         await bot_context.log(ctx, sys_msg)
@@ -119,12 +120,8 @@ async def register(ctx: discord.Interaction):
         await ctx.response.send_message(usr_msg, ephemeral=True)
         await bot_context.log(ctx, sys_msg)
     else:
-        await ctx.response.send_modal(
-            RegisterModal(
-                bot_context,
-                role
-            )
-        )
+        await ctx.response.send_modal(RegisterModal(bot_context, role))
+
 
 class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
     def __init__(self, bot_context):
@@ -155,7 +152,9 @@ class VerifyModal(discord.ui.Modal, title="Verify Your Account"):
                 f"{interaction.user.display_name} has verified their account.",
             )
 
-            if (role := interaction.guild.get_role(self.bot_context.verified_role_id)) is None:
+            if (
+                role := interaction.guild.get_role(self.bot_context.verified_role_id)
+            ) is None:
                 await self.bot_context.log(
                     interaction,
                     f"ERROR: Role {self.bot_context.verified_role_id} not found for {interaction.user.display_name}",
