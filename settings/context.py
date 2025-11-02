@@ -19,7 +19,7 @@ class BotContext:
         self.verified_email_role_id = int(os.getenv("VERIFIED_EMAIL_ROLE_ID"))
 
         self.prefix = os.getenv("PREFIX_COMMAND")
-        self.badwords = ["ticket", "free.*macbook", "macbook.*free", "\$", "seat.*section", "help.*offer", "lumen field", "air*free", "@everyone"]
+        self.badwords = ["ticket", "free.*macbook", "macbook.*free", "\$", "seat.*section", "help.*offer", "lumen field", "personal assistant", "run(ning)?.*errands", "free.*gift.*card", "free.*visa", "free.*paypal", "work.*from.*home", "earn.*money.*fast", "crypto.*investment", "make.*money.*online", "air*free", "@everyone"]
         self.do_not_timeout = set()
 
     async def log(self, ctx, message):
