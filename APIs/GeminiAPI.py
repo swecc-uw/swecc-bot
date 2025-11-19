@@ -46,7 +46,7 @@ class GeminiAPI:
         )
         self.EXPECTED_RESPONSE_INFO = f"Use the context to better tailor your response, but focus on the provided message.{self.BUTLER_MESSAGE_PREFIX}"
 
-        self.url = os.getenv("AI_API_URL", "http://ai:8008")
+        self.url = os.getenv("AI_API_URL", "http://ai-server:8008")
         self.config_key = "swecc-bot"
 
         self.session = requests.Session()
@@ -201,3 +201,5 @@ class GeminiAPI:
 
         response = self.poll_for_response(request_id)
         return response
+
+    # add something to verify and process the timeline itself.
