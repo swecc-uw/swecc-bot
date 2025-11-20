@@ -17,6 +17,7 @@ aoc_api = AdventOfCodeAPI()
 swecc_api = SweccAPI()
 
 LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
+TIMELINE_CHANNEL_ID = int(os.getenv("ADMIN_CHANNEL"))
 
 async def bold_key_parts(ctx: discord.Interaction):
     message = (
@@ -466,6 +467,75 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
         ephemeral=bot_context.ephemeral,
     )
 
+class ProcessModal(discord.ui.Modal, title="Register Your Account"):
+    def __init__(self, bot_context, bot):
+        super().__init__(timeout=None)
+        self.bot_context = bot_context
+        self.bot = bot
+        print(self.bot)
+
+        self.company_name = discord.ui.TextInput(
+            label="Company Name",
+            style=discord.TextStyle.short,
+            placeholder="Enter company name",
+            required=True,
+        )
+
+        self.role = discord.ui.TextInput(
+            label="Role",
+            style=discord.TextStyle.short,
+            placeholder="Enter role Eg. Software Engineer Intern",
+            required=True,
+        )
+
+        self.timeline = discord.ui.TextInput(
+            label="Timeline",
+            style=discord.TextStyle.long,
+            placeholder="Enter process timeline",
+            required=True,
+        )
+
+        self.add_item(self.company_name)
+        self.add_item(self.role)
+        self.add_item(self.timeline)
+    
+    async def on_submit(self, interaction):
+        company_name = self.company_name.value
+        role = self.role.value
+        timeline = self.timeline.value 
+
+        channel = self.bot.get_channel(TIMELINE_CHANNEL_ID)
+
+        embed = discord.Embed(
+            title=f"Process for {company_name}\t\t\t",
+            color=discord.Color.blue()
+
+        )
+        embed.add_field(name="Company:", value=company_name, inline=True)
+        embed.add_field(name="Role:", value=role, inline=True)
+        embed.add_field(name="Timeline:", value=timeline, inline=False)
+
+        await channel.send(embed=embed)
+
+        await interaction.response.send_message(
+            "Your process timeline was submitted!",
+            ephemeral=True
+        )
+
+async def process(ctx: discord.Interaction):
+    verified_rid = bot_context.verified_role_id
+    if (role := ctx.guild.get_role(verified_rid)) and role in ctx.user.roles:
+        sys_msg = (
+            f"{ctx.user.display_name} has tried to add a process timeline for a company."
+        )
+        await ctx.response.send_modal(ProcessModal(bot_context, bot=ctx.client))
+        await bot_context.log(ctx, sys_msg)
+    else:
+        usr_msg = f"You are not verified. Please use /verify to be able to add a process timeline."
+        sys_msg = f"ERROR: {ctx.user.display_name} not verified and tried to add a process timeline."
+
+        await ctx.response.send_message(usr_msg, ephemeral=True)
+        await bot_context.log(ctx, sys_msg)
 
 def setup(client, context):
     global bot_context
@@ -492,3 +562,4 @@ def setup(client, context):
     client.tree.command(name="application")(apply)
     client.tree.command(name="cohort")(cohort)
     client.tree.command(name="verify_school_email")(request_verify_school_email)
+    client.tree.command(name="process")(process)
