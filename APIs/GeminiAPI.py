@@ -203,3 +203,6 @@ class GeminiAPI:
         return response
 
     # add something to verify and process the timeline itself.
+    # async def process_timeline_message(self, message, timeline_text):
+
+

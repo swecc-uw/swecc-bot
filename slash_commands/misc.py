@@ -4,6 +4,7 @@ from APIs.UselessAPIs import UselessAPIs
 from APIs.CalendarAPI import CalendarAPI
 from APIs.AdventOfCodeAPI import AdventOfCodeAPI
 from APIs.SweccAPI import SweccAPI
+from APIs.GeminiAPI import GeminiAPI
 import os
 from dotenv import load_dotenv
 from mq.events import AttendanceEvent, CohortStatsUpdate
@@ -15,8 +16,9 @@ useless = UselessAPIs()
 calendar = CalendarAPI()
 aoc_api = AdventOfCodeAPI()
 swecc_api = SweccAPI()
+gemini_api = GeminiAPI()
 
-LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
+LEADERBOARD_KEY = os.getenv("ADMIN_CHANNEL")
 TIMELINE_CHANNEL_ID = int(os.getenv("ADMIN_CHANNEL"))
 
 async def bold_key_parts(ctx: discord.Interaction):
