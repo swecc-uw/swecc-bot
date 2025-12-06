@@ -22,7 +22,7 @@ async def send_daily_aoc_message(client):
     est = timezone("US/Eastern")
     today = datetime.datetime.now(est)
 
-    if today.month == 12 and today.day <= 25:
+    if today.month == 12 and today.day <= 12:
         try:
             year = today.year
             day = today.day
