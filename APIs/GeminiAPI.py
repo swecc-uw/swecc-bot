@@ -55,7 +55,8 @@ class GeminiAPI:
         self.max_tries = 20 # Allow 10 seconds for response
 
         self.welcome_message_key = "welcome_message"
-    
+        self.process_timeline_message_key="process_timeline_message"
+
     def initialize_config(self):
         data = {
             "max_context_length": self.max_context_length,
@@ -81,6 +82,27 @@ class GeminiAPI:
                 logging.info("Configuration initialized successfully.")
             else:
                 logging.error(f"Failed to initialize configuration: {response.text}")
+
+    def initialize_process_timeline_message_config(self):
+        data = {
+            "max_context_length": self.max_context_length,
+            "context_invalidation_time_seconds": self.context_invalidation_time_seconds,
+            "system_instruction": (
+                "You are a stateless information extraction engine. "
+                "You have no personality. "
+                "You do not greet. "
+                "You do not explain. "
+                "You do not roleplay. "
+                "You only output extracted data or the exact phrase 'Not relevant'."
+            ),
+        }
+
+        with self.session.post(f"{self.url}/inference/{self.process_timeline_message_key}/config", json=data) as response:
+            if response.status_code == 200:
+                logging.info("Configuration initialized successfully.")
+            else:
+                logging.error(f"Failed to initialize configuration: {response.text}")
+
 
     def generate_system_instruction(self):
         return f"{self.ROLE}\n{self.MESSAGE_FORMAT_INSTRUCTION}\n{self.AUTHORIZED_INSTRUCTION}\n{self.UNAUTHORIZED_INSTRUCTION}\n{self.EXPECTED_RESPONSE_INFO}"
@@ -119,6 +141,7 @@ class GeminiAPI:
         failed_response_message = "Request failed. Please try again later."
         while tries < self.max_tries:
             with self.session.get(f"{self.url}/inference/status/{request_id}") as response:
+                print(response,"response")
                 if response.status_code == 200:
                     status = response.json()["status"]
                     if status == "success":
@@ -204,5 +227,48 @@ class GeminiAPI:
 
     # add something to verify and process the timeline itself.
     # async def process_timeline_message(self, message, timeline_text):
+
+    async def process_timeline_message(self,timeline):
+        self.initialize_process_timeline_message_config()
+        cleaned_timeline = str(timeline)
+
+        request_id = self.request_completion(
+            f"""
+            {self.ROLE}
+
+            ### Role
+            Act as an HR Data Processor specializing in extracting job application milestones.
+
+            ### Task
+            Analyze the provided text delimited by triple quotes and determine if it describes a job application timeline.
+
+            ### Data
+            {cleaned_timeline}
+
+            ### Instructions
+            1. **Relevance Check**: Determine if the text describes a sequence of events related to applying for a job.
+            2. **Conditional Output**:
+            - **IF RELEVANT**: Extract and format each event into a numbered list using this exact structure: `[Step Number]. [Stage Name] - [MM/DD/YY]`.
+            - **IF NOT RELEVANT**: Output only the phrase: "Not relevant".
+
+            ### Formatting Example (for Relevant Data)
+            1. Applied to job - 12/03/25
+            2. Received online assessment - 12/07/25
+            3. Recruiter call - 12/10/25
+
+            ### Constraints
+            - Do not include any introductory text or conversational filler.
+            - Use the date format MM/DD/YY.
+            - If a year is missing in the input, use "25" as the default.
+            """,
+            metadata=Metadata(is_authorized=True,author="Gemini"),
+            key = self.process_timeline_message_key,
+            needs_context=False
+            
+        )
+
+        response = self.poll_for_response(request_id)
+        print(response,"response")
+        return response
 
 

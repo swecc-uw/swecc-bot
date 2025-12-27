@@ -505,24 +505,32 @@ class ProcessModal(discord.ui.Modal, title="Register Your Account"):
         company_name = self.company_name.value
         role = self.role.value
         timeline = self.timeline.value 
+        processed_timeline = await gemini_api.process_timeline_message(timeline)  # pass only the timeline
+        print(processed_timeline)
 
         channel = self.bot.get_channel(TIMELINE_CHANNEL_ID)
 
-        embed = discord.Embed(
-            title=f"Process for {company_name}\t\t\t",
-            color=discord.Color.blue()
+        if processed_timeline == "Not relevant":
+            await interaction.response.send_message(
+                "Your description was not relevant!",
+                ephemeral=True
+            )
+        else:
+            embed = discord.Embed(
+                title=f"Process for {company_name}\t\t\t",
+                color=discord.Color.blue()
 
-        )
-        embed.add_field(name="Company:", value=company_name, inline=True)
-        embed.add_field(name="Role:", value=role, inline=True)
-        embed.add_field(name="Timeline:", value=timeline, inline=False)
+            )
+            embed.add_field(name="Company:", value=company_name, inline=True)
+            embed.add_field(name="Role:", value=role, inline=True)
+            embed.add_field(name="Timeline:", value=processed_timeline, inline=False)
 
-        await channel.send(embed=embed)
+            await channel.followup.send(embed=embed)
 
-        await interaction.response.send_message(
-            "Your process timeline was submitted!",
-            ephemeral=True
-        )
+            await interaction.response.send_message(
+                "Your process timeline was submitted!",
+                ephemeral=True
+            )
 
 async def process(ctx: discord.Interaction):
     verified_rid = bot_context.verified_role_id
@@ -531,7 +539,7 @@ async def process(ctx: discord.Interaction):
             f"{ctx.user.display_name} has tried to add a process timeline for a company."
         )
         await ctx.response.send_modal(ProcessModal(bot_context, bot=ctx.client))
-        await bot_context.log(ctx, sys_msg)
+        # await bot_context.log(ctx, sys_msg)
     else:
         usr_msg = f"You are not verified. Please use /verify to be able to add a process timeline."
         sys_msg = f"ERROR: {ctx.user.display_name} not verified and tried to add a process timeline."
