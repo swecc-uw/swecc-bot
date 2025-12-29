@@ -18,7 +18,7 @@ aoc_api = AdventOfCodeAPI()
 swecc_api = SweccAPI()
 gemini_api = GeminiAPI()
 
-LEADERBOARD_KEY = os.getenv("ADMIN_CHANNEL")
+LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
 TIMELINE_CHANNEL = int(os.getenv("TIMELINE_CHANNEL"))
 
 async def bold_key_parts(ctx: discord.Interaction):
