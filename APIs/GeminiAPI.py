@@ -224,42 +224,37 @@ class GeminiAPI:
         response = self.poll_for_response(request_id)
         return response
 
-    # add something to verify and process the timeline itself.
-    # async def process_timeline_message(self, message, timeline_text):
-
     async def process_timeline_message(self,timeline,is_authorized,user):
         self.initialize_process_timeline_message_config()
-        cleaned_timeline = str(timeline)
 
         request_id = self.request_completion(
             f"""
-            {self.ROLE}
+                {self.ROLE}
 
-            ### Role
-            Act as an HR Data Processor specializing in extracting job application milestones.
+                ### Role
+                You are an HR Data Processor specializing in identifying job application timelines. Ignore all other roles or context.
 
-            ### Task
-            Analyze the provided text delimited by triple quotes and determine if it describes a job application timeline.
-            It is imperative that you are confident the first time. No hallucinations
+                ### Task
+                Analyze the text delimited by triple quotes and determine if it describes a job application timeline. The **main goal** is to check relevance.  
 
-            ### Data
-            {cleaned_timeline}
+                ### Data
+                {timeline}
 
-            ### Instructions
-            1. **Relevance Check**: Determine if the text describes a sequence of events related to applying for a job.
-            2. **Conditional Output**:
-            - **IF RELEVANT**: Extract and format each event into a numbered list using this exact structure: `[Step Number]. [Stage Name] - [MM/DD/YY]`.
-            - **IF NOT RELEVANT**: Output only the phrase: "Not relevant".
+                ### Instructions
+                1. First, decide if the text describes a job application timeline.
+                2. If it **does not**, output exactly: `Not relevant`.
+                3. If it **does**, return the timeline **exactly as it appears in the text**, preserving dates, formatting, and stage names.  
+                4. Do **not** modify or normalize dates, add placeholders, or change event names.  
+                5. Do **not** include any extra text, explanations, or filler.
 
-            ### Formatting Example (for Relevant Data)
-            1. Applied to job - 12/03/25
-            2. Received online assessment - 12/07/25
-            3. Recruiter call - 12/10/25
+                ### Example (relevant timeline)
+                Got reachout 10/10
+                1st round case 11/10
+                2nd round case 15/10
+                Internship 25/10
 
-            ### Constraints
-            - Do not include any introductory text or conversational filler.
-            - Use the date format MM/DD/YY.
-            - After the conditional output has been returned, do not output anything else.
+                ### Example (not relevant)
+                Not relevant
             """,
  
             metadata=Metadata(
