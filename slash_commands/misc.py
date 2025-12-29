@@ -19,7 +19,7 @@ swecc_api = SweccAPI()
 gemini_api = GeminiAPI()
 
 LEADERBOARD_KEY = os.getenv("ADMIN_CHANNEL")
-TIMELINE_CHANNEL_ID = int(os.getenv("ADMIN_CHANNEL"))
+TIMELINE_CHANNEL = int(os.getenv("TIMELINE_CHANNEL"))
 
 async def bold_key_parts(ctx: discord.Interaction):
     message = (
@@ -511,7 +511,7 @@ class ProcessModal(discord.ui.Modal, title="Register Your Account"):
 
         processed_timeline = await gemini_api.process_timeline_message(timeline, self.is_authorized, self.username) # pass only the timeline
 
-        channel = self.bot.get_channel(TIMELINE_CHANNEL_ID)
+        channel = self.bot.get_channel(TIMELINE_CHANNEL)
 
         if processed_timeline == "Not relevant":
             await interaction.followup.send(
