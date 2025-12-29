@@ -470,11 +470,12 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
     )
 
 class ProcessModal(discord.ui.Modal, title="Register Your Account"):
-    def __init__(self, bot_context, bot):
+    def __init__(self, bot_context, is_authorized, username, bot):
         super().__init__(timeout=None)
         self.bot_context = bot_context
         self.bot = bot
-        print(self.bot)
+        self.is_authorized = is_authorized
+        self.username = username
 
         self.company_name = discord.ui.TextInput(
             label="Company Name",
@@ -502,44 +503,46 @@ class ProcessModal(discord.ui.Modal, title="Register Your Account"):
         self.add_item(self.timeline)
     
     async def on_submit(self, interaction):
+        await interaction.response.defer(ephemeral=True)
+
         company_name = self.company_name.value
         role = self.role.value
-        timeline = self.timeline.value 
-        processed_timeline = await gemini_api.process_timeline_message(timeline)  # pass only the timeline
-        print(processed_timeline)
+        timeline = self.timeline.value
+
+        processed_timeline = await gemini_api.process_timeline_message(timeline, self.is_authorized, self.username) # pass only the timeline
 
         channel = self.bot.get_channel(TIMELINE_CHANNEL_ID)
 
         if processed_timeline == "Not relevant":
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "Your description was not relevant!",
                 ephemeral=True
             )
-        else:
-            embed = discord.Embed(
-                title=f"Process for {company_name}\t\t\t",
-                color=discord.Color.blue()
+            return
 
-            )
-            embed.add_field(name="Company:", value=company_name, inline=True)
-            embed.add_field(name="Role:", value=role, inline=True)
-            embed.add_field(name="Timeline:", value=processed_timeline, inline=False)
+        embed = discord.Embed(
+            title=f"Process for {company_name}",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="Company:", value=company_name, inline=True)
+        embed.add_field(name="Role:", value=role, inline=True)
+        embed.add_field(name="Timeline:", value=processed_timeline, inline=False)
 
-            await channel.followup.send(embed=embed)
+        await channel.send(embed=embed)
 
-            await interaction.response.send_message(
-                "Your process timeline was submitted!",
-                ephemeral=True
-            )
-
+        await interaction.followup.send(
+            "Your process timeline was submitted!",
+            ephemeral=True
+        )
+        
 async def process(ctx: discord.Interaction):
     verified_rid = bot_context.verified_role_id
     if (role := ctx.guild.get_role(verified_rid)) and role in ctx.user.roles:
         sys_msg = (
             f"{ctx.user.display_name} has tried to add a process timeline for a company."
         )
-        await ctx.response.send_modal(ProcessModal(bot_context, bot=ctx.client))
-        # await bot_context.log(ctx, sys_msg)
+        await ctx.response.send_modal(ProcessModal(bot_context,is_authorized=True,username=ctx.user.display_name,bot=ctx.client))
+        await bot_context.log(ctx, sys_msg)
     else:
         usr_msg = f"You are not verified. Please use /verify to be able to add a process timeline."
         sys_msg = f"ERROR: {ctx.user.display_name} not verified and tried to add a process timeline."

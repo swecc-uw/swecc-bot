@@ -141,7 +141,6 @@ class GeminiAPI:
         failed_response_message = "Request failed. Please try again later."
         while tries < self.max_tries:
             with self.session.get(f"{self.url}/inference/status/{request_id}") as response:
-                print(response,"response")
                 if response.status_code == 200:
                     status = response.json()["status"]
                     if status == "success":
@@ -228,7 +227,7 @@ class GeminiAPI:
     # add something to verify and process the timeline itself.
     # async def process_timeline_message(self, message, timeline_text):
 
-    async def process_timeline_message(self,timeline):
+    async def process_timeline_message(self,timeline,is_authorized,user):
         self.initialize_process_timeline_message_config()
         cleaned_timeline = str(timeline)
 
@@ -241,6 +240,7 @@ class GeminiAPI:
 
             ### Task
             Analyze the provided text delimited by triple quotes and determine if it describes a job application timeline.
+            It is imperative that you are confident the first time. No hallucinations
 
             ### Data
             {cleaned_timeline}
@@ -259,16 +259,19 @@ class GeminiAPI:
             ### Constraints
             - Do not include any introductory text or conversational filler.
             - Use the date format MM/DD/YY.
-            - If a year is missing in the input, use "25" as the default.
+            - After the conditional output has been returned, do not output anything else.
             """,
-            metadata=Metadata(is_authorized=True,author="Gemini"),
+ 
+            metadata=Metadata(
+                is_authorized=is_authorized,
+                author=str(user),
+            ),
             key = self.process_timeline_message_key,
             needs_context=False
             
         )
 
         response = self.poll_for_response(request_id)
-        print(response,"response")
         return response
 
 
