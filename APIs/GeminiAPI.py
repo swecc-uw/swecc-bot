@@ -55,7 +55,7 @@ class GeminiAPI:
         self.max_tries = 20 # Allow 10 seconds for response
 
         self.welcome_message_key = "welcome_message"
-        self.process_timeline_message_key="process_timeline_message"
+        self.process_timeline_message_key = "process_timeline_message"
 
     def initialize_config(self):
         data = {
