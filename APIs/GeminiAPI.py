@@ -235,7 +235,7 @@ class GeminiAPI:
                 You are an HR Data Processor specializing in identifying job application timelines. Ignore all other roles or context.
 
                 ### Task
-                Analyze the text delimited by triple quotes and determine if it describes a job application timeline. The **main goal** is to check relevance.  
+                Analyze the text under the heading Data and determine if it describes a job application timeline. The **main goal** is to check relevance.  
 
                 ### Data
                 {timeline}
@@ -261,7 +261,7 @@ class GeminiAPI:
                 is_authorized=is_authorized,
                 author=str(user),
             ),
-            key = self.process_timeline_message_key,
+            key=self.process_timeline_message_key,
             needs_context=False
             
         )
