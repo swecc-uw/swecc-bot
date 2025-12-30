@@ -469,7 +469,7 @@ async def request_verify_school_email(ctx: discord.Interaction, email: str):
         ephemeral=bot_context.ephemeral,
     )
 
-class ProcessModal(discord.ui.Modal, title="Register Your Account"):
+class ProcessModal(discord.ui.Modal, title="Submit Process Timeline"):
     def __init__(self, bot_context, is_authorized, username, bot):
         super().__init__(timeout=None)
         self.bot_context = bot_context
