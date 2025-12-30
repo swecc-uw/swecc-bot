@@ -541,7 +541,14 @@ async def process(ctx: discord.Interaction):
         sys_msg = (
             f"{ctx.user.display_name} has tried to add a process timeline for a company."
         )
-        await ctx.response.send_modal(ProcessModal(bot_context,is_authorized=True,username=ctx.user.display_name,bot=ctx.client))
+        await ctx.response.send_modal(
+            ProcessModal(
+                bot_context,
+                is_authorized=True,
+                username=ctx.user.display_name,
+                bot=ctx.client,
+            )
+        )
         await bot_context.log(ctx, sys_msg)
     else:
         usr_msg = f"You are not verified. Please use /verify to be able to add a process timeline."
