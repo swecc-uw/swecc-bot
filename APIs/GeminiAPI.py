@@ -224,7 +224,7 @@ class GeminiAPI:
         response = self.poll_for_response(request_id)
         return response
 
-    async def process_timeline_message(self,timeline,is_authorized,user):
+    async def process_timeline_message(self, timeline, is_authorized, user):
         if not getattr(self, "_process_timeline_message_config_initialized", False):
             self.initialize_process_timeline_message_config()
             self._process_timeline_message_config_initialized = True
