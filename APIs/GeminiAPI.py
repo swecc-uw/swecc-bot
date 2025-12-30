@@ -225,7 +225,9 @@ class GeminiAPI:
         return response
 
     async def process_timeline_message(self,timeline,is_authorized,user):
-        self.initialize_process_timeline_message_config()
+        if not getattr(self, "_process_timeline_message_config_initialized", False):
+            self.initialize_process_timeline_message_config()
+            self._process_timeline_message_config_initialized = True
 
         request_id = self.request_completion(
             f"""
