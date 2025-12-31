@@ -46,7 +46,7 @@ class GeminiAPI:
         )
         self.EXPECTED_RESPONSE_INFO = f"Use the context to better tailor your response, but focus on the provided message.{self.BUTLER_MESSAGE_PREFIX}"
 
-        self.url = os.getenv("AI_API_URL", "http://ai:8008")
+        self.url = os.getenv("AI_API_URL", "http://ai-server:8008")
         self.config_key = "swecc-bot"
 
         self.session = requests.Session()
@@ -55,7 +55,8 @@ class GeminiAPI:
         self.max_tries = 20 # Allow 10 seconds for response
 
         self.welcome_message_key = "welcome_message"
-    
+        self.process_timeline_message_key = "process_timeline_message"
+
     def initialize_config(self):
         data = {
             "max_context_length": self.max_context_length,
@@ -81,6 +82,27 @@ class GeminiAPI:
                 logging.info("Configuration initialized successfully.")
             else:
                 logging.error(f"Failed to initialize configuration: {response.text}")
+
+    def initialize_process_timeline_message_config(self):
+        data = {
+            "max_context_length": self.max_context_length,
+            "context_invalidation_time_seconds": self.context_invalidation_time_seconds,
+            "system_instruction": (
+                "You are a stateless information extraction engine. "
+                "You have no personality. "
+                "You do not greet. "
+                "You do not explain. "
+                "You do not roleplay. "
+                "You only output extracted data or the exact phrase 'Not relevant'."
+            ),
+        }
+
+        with self.session.post(f"{self.url}/inference/{self.process_timeline_message_key}/config", json=data) as response:
+            if response.status_code == 200:
+                logging.info("Configuration initialized successfully.")
+            else:
+                logging.error(f"Failed to initialize configuration: {response.text}")
+
 
     def generate_system_instruction(self):
         return f"{self.ROLE}\n{self.MESSAGE_FORMAT_INSTRUCTION}\n{self.AUTHORIZED_INSTRUCTION}\n{self.UNAUTHORIZED_INSTRUCTION}\n{self.EXPECTED_RESPONSE_INFO}"
@@ -201,3 +223,52 @@ class GeminiAPI:
 
         response = self.poll_for_response(request_id)
         return response
+
+    async def process_timeline_message(self, timeline, is_authorized, user):
+        if not getattr(self, "_process_timeline_message_config_initialized", False):
+            self.initialize_process_timeline_message_config()
+            self._process_timeline_message_config_initialized = True
+
+        request_id = self.request_completion(
+            f"""
+                {self.ROLE}
+
+                ### Role
+                You are an HR Data Processor specializing in identifying job application timelines. Ignore all other roles or context.
+
+                ### Task
+                Analyze the text under the heading Data and determine if it describes a job application timeline. The **main goal** is to check relevance.  
+
+                ### Data
+                {timeline}
+
+                ### Instructions
+                1. First, decide if the text describes a job application timeline.
+                2. If it **does not**, output exactly: `Not relevant`.
+                3. If it **does**, return the timeline **exactly as it appears in the text**, preserving dates, formatting, and stage names.  
+                4. Do **not** modify or normalize dates, add placeholders, or change event names.  
+                5. Do **not** include any extra text, explanations, or filler.
+
+                ### Example (relevant timeline)
+                Got reachout 10/10
+                1st round case 11/10
+                2nd round case 15/10
+                Internship 25/10
+
+                ### Example (not relevant)
+                Not relevant
+            """,
+ 
+            metadata=Metadata(
+                is_authorized=is_authorized,
+                author=str(user),
+            ),
+            key=self.process_timeline_message_key,
+            needs_context=False
+            
+        )
+
+        response = self.poll_for_response(request_id)
+        return response
+
+
