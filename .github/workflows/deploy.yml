@@ -80,6 +80,9 @@ jobs:
         run: |
           STAGING_NAME="${{ env.SERVICE_NAME }}-staging"
 
+          echo "Ensuring no leftover staging service: $STAGING_NAME"
+          docker service rm "$STAGING_NAME" || true
+
           echo "Creating temporary service: $STAGING_NAME"
           docker service create \
             --name "$STAGING_NAME" \
