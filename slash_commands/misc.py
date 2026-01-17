@@ -21,6 +21,18 @@ gemini_api = GeminiAPI()
 LEADERBOARD_KEY = os.getenv("AOC_LEADERBOARD_KEY")
 TIMELINE_CHANNEL = int(os.getenv("TIMELINE_CHANNEL"))
 
+async def split_company_role(ctx: discord.Interaction):
+    message = (
+        "Format your experience so the company name is bolded on top and the role title appears slightly smaller below. "
+        "This makes your resume easier to scan for recruiters and more ATS-friendly than keeping everything on one line.\n\n"
+        "Example:\n"
+        "**Amazon**\n"
+        "*Software Development Engineering Intern*\n"
+        "- ...\n"
+        "- ..."
+    )
+    await ctx.response.send_message(message)
+
 async def bold_key_parts(ctx: discord.Interaction):
     message = (
         "Bold key parts of each experience so important details stand out — usually the tech stack or a standout metric. "
@@ -566,6 +578,7 @@ def setup(client, context):
     client.tree.command(name="jakes")(jakes_resume)
     client.tree.command(name="reverse_order")(reverse_chronological)
     client.tree.command(name="bold")(bold_key_parts)
+    client.tree.command(name="splitrole")(split_company_role)
     client.tree.command(name="resume_guide")(full_resume_guide)
     client.tree.command(name="useless_fact")(useless_facts)
     client.tree.command(name="kanye")(kanye)
